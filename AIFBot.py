@@ -7,8 +7,7 @@ import numpy as np
 from scripts_of_tribute.base_ai import BaseAI
 from scripts_of_tribute.board import GameState, EndGameState
 from scripts_of_tribute.enums import PatronId, MoveEnum, PlayerEnum
-from scripts_of_tribute.move import BasicMove
-from tabulate import tabulate
+from scripts_of_tribute.move import BasicMove, SimpleCardMove, SimplePatronMove
 
 
 class AIFBot(BaseAI):
@@ -19,13 +18,14 @@ class AIFBot(BaseAI):
         self.player_id: PlayerEnum = PlayerEnum.NO_PLAYER_SELECTED
         self.start_of_game: bool = True
         self.depth: int = depth
+        self.best_moves:list[BasicMove] = []
+
 
     def select_patron(self, available_patrons):
         pick = random.choice(available_patrons)
         return pick
 
-    ## ========================Functionality========================
-
+    ## ========================Heuristic========================
     def HandStatistics(self, game_state: GameState, regex):
         cards = game_state.current_player.draw_pile + game_state.current_player.hand + game_state.current_player.cooldown_pile
         pattern = re.compile(rf"({regex}) (\d+)")
@@ -47,11 +47,6 @@ class AIFBot(BaseAI):
         average_singleCard = sum(n for _, n in cards_sorted) / len(cards_sorted) if cards_sorted else 0
         average_Hand = (top_5_hand + bottom_5_hand)/ 2
 
-        # headers = ["Effect", "Top 5 Sum", "Bottom 5 Sum", "Avg Single Card", "Avg Hand"]
-        # table = [[regex, top_5_hand, bottom_5_hand, f"{average_singleCard:.2f}", f"{average_Hand:.2f}"]]
-        # print(tabulate(table, headers=headers, tablefmt="github"))
-        # print()
-
         return top_5_hand,bottom_5_hand, average_Hand,average_singleCard
 
     def CalculateMaxMinAverageCoin(self,game_state: GameState):
@@ -65,7 +60,7 @@ class AIFBot(BaseAI):
         favor = 0
         for patron_id, player_enum in patron_favor:
             if player_enum == PlayerEnum.NO_PLAYER_SELECTED:
-                continue # if the patron favor is neutral it will ignore
+                continue # if the patron favor is neutral, ignore it
             elif player_enum == self.player_id:
                 favor = favor + 1
             else:
@@ -75,7 +70,7 @@ class AIFBot(BaseAI):
     def CalculateCoinLeft(self,game_state: GameState):
         return game_state.current_player.coins
 
-    def utilityFunction(self, game_state):
+    def utilityFunction(self, game_state) ->float:
             top_hand_coin,bottom_hand_coin, average_Hand_coin, average_singleCard_coin = self.CalculateMaxMinAverageCoin(game_state)
             top_hand_PEP,bottom_hand_PEP, average_Hand_PEP, average_singleCard_PEP = self.CalculateMaxMinAveragePowerAndPrestige(game_state)
             favor = self.CalculateFavor(game_state)
@@ -87,11 +82,12 @@ class AIFBot(BaseAI):
                                 np.sign(favor) * favor**2, -coin_left])
             weight  = np.ones((1,param.shape[0])) # trained
             utility = weight @ param
-            return utility[0]
+            return float(utility[0])
 
+    ## ========================Functionality========================
     def CheckForGoalState(self, game_state) -> bool:
         if game_state.end_game_state is not None:
-            # check if game is over, if we win we are fine with this move
+            # check if the game is over, if we win, we are fine with this move
             if game_state.end_game_state.winner == self.player_id:
                 return True
         return False
@@ -99,7 +95,7 @@ class AIFBot(BaseAI):
     def NewPossibleMoveAviable(self, moves):
         return not (len(moves) == 1 and moves[0].command == MoveEnum.END_TURN)
 
-    def ExploreMoveAvailable(self, possible_moves, game_state):
+    def ExploreMoveAvailable(self, possible_moves:list[BasicMove], game_state:GameState) -> BasicMove:
         if not self.NewPossibleMoveAviable(possible_moves):
             # if there are no moves possible, select the end of turn move
             return possible_moves[0]
@@ -111,7 +107,7 @@ class AIFBot(BaseAI):
                 # skip the END_TURN command
                 continue
 
-            curr_val = self.EvaluateMove(evaluating_move,game_state,self.depth)
+            curr_val = self.EvaluateMove(evaluating_move,game_state,self.depth-1)
             if curr_val == float('inf'):
                 # Goal State founded can return early
                 return evaluating_move
@@ -121,16 +117,14 @@ class AIFBot(BaseAI):
 
         return best_move
 
-    def EvaluateMove(self,move, game_state, depth:int):
+    def EvaluateMove(self,move, game_state, depth:int)->float:
         # Move Evaluation (Depth first approach)
         local_game_state, new_moves = game_state.apply_move(move)
+
         if self.CheckForGoalState(local_game_state):
             return float('inf')
 
-        if depth == 0:
-            return self.utilityFunction(local_game_state)
-        elif not self.NewPossibleMoveAviable(new_moves):
-            # if there are no moves possible then let's just check the value of this game state
+        if depth == 0 or not self.NewPossibleMoveAviable(new_moves):
             return self.utilityFunction(local_game_state)
 
         move_value=[]
@@ -141,7 +135,7 @@ class AIFBot(BaseAI):
 
         return max(move_value)
 
-    def play(self, game_state, possible_moves, remaining_time):
+    def play(self, game_state: GameState, possible_moves:list[BasicMove], remaining_time: int) -> BasicMove:
         #Set Up
         if self.start_of_game:
             self.player_id = game_state.current_player.player_id
@@ -152,7 +146,7 @@ class AIFBot(BaseAI):
 
         # End of Search
         if bast_move is None:
-            bast_move = MoveEnum.END_TURN
+            bast_move = next(move for move in possible_moves if move.command == MoveEnum.END_TURN)
             print("unexpected game state, returning end of turn")
 
         return bast_move
