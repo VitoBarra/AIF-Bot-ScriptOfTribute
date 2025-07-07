@@ -1,11 +1,14 @@
 ﻿import os
 import random
+import re
+
 import numpy as np
 
 from scripts_of_tribute.base_ai import BaseAI
 from scripts_of_tribute.board import GameState, EndGameState
 from scripts_of_tribute.enums import PatronId, MoveEnum, PlayerEnum
 from scripts_of_tribute.move import BasicMove
+from tabulate import tabulate
 
 
 class AIFBot(BaseAI):
@@ -23,21 +26,39 @@ class AIFBot(BaseAI):
 
     ## ========================Functionality========================
 
+    def HandStatistics(self, game_state: GameState, regex):
+        cards = game_state.current_player.draw_pile + game_state.current_player.hand + game_state.current_player.cooldown_pile
+        pattern = re.compile(rf"({regex}) (\d+)")
+
+        valid_card = [
+            (card, int(pattern.match(effect).group(2)))
+            for card in cards
+            for effect in card.effects
+            if pattern.match(effect)
+        ]
+        if valid_card is [] or valid_card is None:
+            print("no valid card founded")
+            return 0,0,0,0
+
+        cards_sorted = sorted(valid_card, key=lambda x: x[1], reverse=True)
+
+        top_5_hand = sum(n for _, n in cards_sorted[:5])
+        bottom_5_hand = sum(n for _, n in cards_sorted[-5:])
+        average_singleCard = sum(n for _, n in cards_sorted) / len(cards_sorted) if cards_sorted else 0
+        average_Hand = (top_5_hand + bottom_5_hand)/ 2
+
+        # headers = ["Effect", "Top 5 Sum", "Bottom 5 Sum", "Avg Single Card", "Avg Hand"]
+        # table = [[regex, top_5_hand, bottom_5_hand, f"{average_singleCard:.2f}", f"{average_Hand:.2f}"]]
+        # print(tabulate(table, headers=headers, tablefmt="github"))
+        # print()
+
+        return top_5_hand,bottom_5_hand, average_Hand,average_singleCard
+
     def CalculateMaxMinAverageCoin(self,game_state: GameState):
-        max = 1
-        average = 1
-        min = 1
+        return self.HandStatistics(game_state,"GAIN_COIN")
 
-
-
-        return (max, average,min)
-
-    def CalculateMaxMinAveragePowerAndPrestige(self, game_state):
-        max = 1
-        average = 1
-        min = 1
-
-        return (max, average, min)
+    def CalculateMaxMinAveragePowerAndPrestige(self, game_state: GameState):
+        return self.HandStatistics(game_state, "GAIN_POWER|GAIN_PRESTIGE")
 
     def CalculateFavor(self,game_state:GameState):
         patron_favor = game_state.patron_states.patrons.items()
@@ -51,16 +72,18 @@ class AIFBot(BaseAI):
                 favor = favor - 1
         return favor
 
-    def CalculateCoinLeft(self,game_state):
+    def CalculateCoinLeft(self,game_state: GameState):
         return game_state.current_player.coins
 
     def utilityFunction(self, game_state):
-            max_coin, average_coin, min_coin = self.CalculateMaxMinAverageCoin(game_state)
-            max_PEP, average_PEP, min_PEP = self.CalculateMaxMinAveragePowerAndPrestige(game_state)
+            top_hand_coin,bottom_hand_coin, average_Hand_coin, average_singleCard_coin = self.CalculateMaxMinAverageCoin(game_state)
+            top_hand_PEP,bottom_hand_PEP, average_Hand_PEP, average_singleCard_PEP = self.CalculateMaxMinAveragePowerAndPrestige(game_state)
             favor = self.CalculateFavor(game_state)
             coin_left = self.CalculateCoinLeft(game_state)
 
-            param   = np.array([np.log(max_coin), average_coin , min_coin , max_PEP**1.3, average_PEP, min_PEP, np.sign(favor) * favor**2, -coin_left])
+            param   = np.array([np.log(top_hand_coin),bottom_hand_coin, average_Hand_coin, average_singleCard_coin,
+                                top_hand_PEP**1.3,bottom_hand_PEP, average_Hand_PEP, average_singleCard_PEP,
+                                np.sign(favor) * favor**2, -coin_left])
             weight  = np.ones((1,param.shape[0])) # trained
             utility = weight @ param
             return utility[0]
