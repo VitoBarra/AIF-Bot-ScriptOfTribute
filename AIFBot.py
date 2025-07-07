@@ -39,8 +39,17 @@ class AIFBot(BaseAI):
 
         return (max, average, min)
 
-    def CalculateFevor(self,game_state):
-        return 1
+    def CalculateFavor(self,game_state:GameState):
+        patron_favor = game_state.patron_states.patrons.items()
+        favor = 0
+        for patron_id, player_enum in patron_favor:
+            if player_enum == PlayerEnum.NO_PLAYER_SELECTED:
+                continue # if the patron favor is neutral it will ignore
+            elif player_enum == self.player_id:
+                favor = favor + 1
+            else:
+                favor = favor - 1
+        return favor
 
     def CalculateCoinLeft(self,game_state):
         return game_state.current_player.coins
@@ -48,7 +57,7 @@ class AIFBot(BaseAI):
     def utilityFunction(self, game_state):
             max_coin, average_coin, min_coin = self.CalculateMaxMinAverageCoin(game_state)
             max_PEP, average_PEP, min_PEP = self.CalculateMaxMinAveragePowerAndPrestige(game_state)
-            favor = self.CalculateFevor(game_state)
+            favor = self.CalculateFavor(game_state)
             coin_left = self.CalculateCoinLeft(game_state)
 
             param   = np.array([np.log(max_coin), average_coin , min_coin , max_PEP**1.3, average_PEP, min_PEP, np.sign(favor) * favor**2, -coin_left])
