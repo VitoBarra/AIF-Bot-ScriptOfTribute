@@ -43,7 +43,7 @@ class AIFBot(BaseAI):
         return 1
 
     def CalculateCoinLeft(self,game_state):
-        return 1
+        return game_state.current_player.coins
 
     def utilityFunction(self, game_state):
             max_coin, average_coin, min_coin = self.CalculateMaxMinAverageCoin(game_state)
