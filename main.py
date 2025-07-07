@@ -22,9 +22,9 @@ if __name__ == "__main__":
     game.register_bot(bot_maxPrestige)
 
     game.run(
-        maxPrestige_name,
         aif_name,
+        maxPrestige_name,
         start_game_runner=True,
-        runs=14,
-        threads=2,
+        runs=100,
+        threads=5,
     )

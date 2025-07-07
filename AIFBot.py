@@ -83,6 +83,7 @@ class AIFBot(BaseAI):
 
             param   = np.array([np.log(top_hand_coin),bottom_hand_coin, average_Hand_coin, average_singleCard_coin,
                                 top_hand_PEP**1.3,bottom_hand_PEP, average_Hand_PEP, average_singleCard_PEP,
+                                game_state.current_player.prestige, game_state.current_player.power,
                                 np.sign(favor) * favor**2, -coin_left])
             weight  = np.ones((1,param.shape[0])) # trained
             utility = weight @ param
