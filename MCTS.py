@@ -2,7 +2,9 @@ import numpy as np
 
 from scripts_of_tribute.board import GameState
 from scripts_of_tribute.move import BasicMove
-from AIFBot import AIFBot
+
+from BotCommon.Heuristics import utilityFunction_MIXMAXAVERAGERES
+from bots.AIFBot import AIFBot
 
 def some_time_left() -> bool:
     return True # NEEDS TO BE IMPLEMENTED
@@ -58,8 +60,8 @@ class MonteCarloTreeSearchNode:
         # return terminal_node
         return self
     
-    def evaluate_terminal_node (self, aif_bot: AIFBot):
-        return aif_bot.utilityFunction(self.game_state)
+    def evaluate_terminal_node (self, heuristic):
+        return heuristic(self.game_state)
 
     def backpropagate(self, val, is_leaf = True):
         self.number_of_visits += 1
@@ -73,7 +75,7 @@ class MonteCarloTreeSearch:
     def __init__(self, game_state: GameState, possible_moves: list[BasicMove]):
         self.root = MonteCarloTreeSearchNode(game_state, None, None, possible_moves) # root has no parent
         self.root.node_expansion()
-        self.aif_bot = AIFBot("utility_function", 0)
+        self.heuristic = utilityFunction_MIXMAXAVERAGERES
         
     def move_choice(self): # si potrebbe chiamare play ma non vorrei fare confusione con la funzione play del bot
 
@@ -81,7 +83,7 @@ class MonteCarloTreeSearch:
             selected_child_node = self.root.child_node_selection()
             if selected_child_node.is_leaf:
                 terminal_node: MonteCarloTreeSearchNode = selected_child_node.playout()
-                val = terminal_node.evaluate_terminal_node(self.aif_bot)
+                val = terminal_node.evaluate_terminal_node(self.heuristic)
                 terminal_node.backpropagate(val)
                 
         max_val = -1
