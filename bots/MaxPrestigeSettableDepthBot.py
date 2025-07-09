@@ -4,7 +4,10 @@ import os
 from scripts_of_tribute.base_ai import BaseAI
 from scripts_of_tribute.board import GameState, EndGameState
 from scripts_of_tribute.enums import PlayerEnum, MoveEnum
-from scripts_of_tribute.move import BasicMove
+
+
+from BotCommon.CommonCheck import NewPossibleMoveAvailable, CheckForGoalState
+from BotCommon.Heuristics import utilityFunction_PrestigeAndPower
 
 
 class MaxPrestigeSettableDepthBot(BaseAI):
@@ -21,21 +24,8 @@ class MaxPrestigeSettableDepthBot(BaseAI):
         return pick
 
     ## ========================Functionality========================
-    def utilityFunction(self, game_state):
-        return game_state.current_player.prestige + game_state.current_player.power
-
-    def CheckForGoalState(self, game_state) -> bool:
-        if game_state.end_game_state is not None:
-            # Check if game is over, if we win we are fine with this move
-            if game_state.end_game_state.winner == self.player_id:
-                return True
-        return False
-
-    def NewPossibleMoveAviable(self, moves):
-        return not (len(moves) == 1 and moves[0].command == MoveEnum.END_TURN)
-
     def ExploreMoveAvailable(self, possible_moves, game_state):
-        if not self.NewPossibleMoveAviable(possible_moves):
+        if not NewPossibleMoveAvailable(possible_moves):
             # If there are no moves possible, select the end of turn move
             return possible_moves[0]
 
@@ -59,14 +49,11 @@ class MaxPrestigeSettableDepthBot(BaseAI):
     def EvaluateMove(self,move, game_state, depth:int):
         # Move Evaluation (Depth first approach)
         local_game_state, new_moves = game_state.apply_move(move)
-        if self.CheckForGoalState(local_game_state):
+        if CheckForGoalState(local_game_state,self.player_id):
             return float('inf')
 
-        if depth == 0:
-            return self.utilityFunction(local_game_state)
-        elif not self.NewPossibleMoveAviable(new_moves):
-            # If there are no moves possible then let's just check the value of this game state
-            return self.utilityFunction(local_game_state)
+        if depth == 0 or not NewPossibleMoveAvailable(new_moves):
+            return utilityFunction_PrestigeAndPower(local_game_state)
 
         move_value=[]
         for new_move in new_moves:
