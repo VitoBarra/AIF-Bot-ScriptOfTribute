@@ -18,9 +18,6 @@ class MonteCarloTreeSearchNode:
         self.max_val = 0 # U(n)
         self.is_leaf = True
 
-    def has_untried_move(self) -> bool:
-        return len(self.untried_moves) > 0
-
     @staticmethod
     def my_ucb1(node):
         c = np.sqrt(2)  # In theory should be np.sqrt(2), but we can test other parameters
@@ -73,10 +70,19 @@ class MonteCarloTreeSearchNode:
         if self.is_terminal():
             return self
 
-        terminal_node = None
-        # NEEDS TO BE IMPLEMENTED
-        # return terminal_node
-        return self
+        best_move_val = -1
+        best_move = None
+
+        for untried_move in self.untried_moves:
+            child_game_state, child_moves = self.game_state.apply_move(untried_move)
+            val = heuristic(child_game_state)
+            if val > best_move_val:
+                best_move_val = val
+                best_move = untried_move
+
+        best_child: MonteCarloTreeSearchNode = self.node_expansion(best_move)
+
+        return best_child.playout(heuristic)
     
     def evaluate_terminal_node (self, heuristic):
         return heuristic(self.game_state)
