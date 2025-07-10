@@ -6,7 +6,7 @@ from scripts_of_tribute.board import GameState, EndGameState
 from scripts_of_tribute.enums import MoveEnum, PlayerEnum
 from scripts_of_tribute.move import BasicMove
 
-from BotCommon.CommonCheck import NewPossibleMoveAvailable, CheckForGoalState
+from BotCommon.CommonCheck import NewPossibleMoveAvailable, CheckForGoalState, IsPriorMoves
 from BotCommon.Heuristics import utilityFunction_MIXMAXAVERAGERES
 
 
@@ -68,21 +68,29 @@ class AIFBot(BaseAI):
 
         return max(move_value)
 
+
     def play(self, game_state: GameState, possible_moves:list[BasicMove], remaining_time: int) -> BasicMove:
         #Set Up
         if self.start_of_game:
             self.player_id = game_state.current_player.player_id
             self.start_of_game = False
 
-        #Move Evaluation
-        bast_move = self.ExploreMoveAvailable(possible_moves, game_state)
+
+        for move in possible_moves:
+            if IsPriorMoves(move, game_state):
+                # Return the first prior move encountered
+                return move
+
+
+        # Move Evaluation
+        best_move = self.ExploreMoveAvailable(possible_moves, game_state)
 
         # End of Search
-        if bast_move is None:
-            bast_move = next(move for move in possible_moves if move.command == MoveEnum.END_TURN)
+        if best_move is None:
+            best_move = next(move for move in possible_moves if move.command == MoveEnum.END_TURN)
             print("unexpected game state, returning end of turn")
 
-        return bast_move
+        return best_move
 
     def game_end(self, end_game_state: EndGameState, final_state: GameState):
         # Example how you can log your game for further analysis
