@@ -1,13 +1,10 @@
 import numpy as np
 
-from scripts_of_tribute.board import GameState
+from scripts_of_tribute.board import GameState # EndGameState is an attribute of GameState
+from scripts_of_tribute.enums import MoveEnum
 from scripts_of_tribute.move import BasicMove
 
 from BotCommon.Heuristics import utilityFunction_MIXMAXAVERAGERES
-from bots.AIFBot import AIFBot
-
-def some_time_left() -> bool:
-    return True # NEEDS TO BE IMPLEMENTED
 
 class MonteCarloTreeSearchNode:
     def __init__(self, game_state: GameState, parent=None, parent_move=None, untried_moves=None):
@@ -24,37 +21,58 @@ class MonteCarloTreeSearchNode:
     def has_untried_move(self) -> bool:
         return len(self.untried_moves) > 0
 
-    def child_node_selection(self):
-        c = np.sqrt(2) # In Theory it must be root(2) but we can test other parameters
+    @staticmethod
+    def my_ucb1(node):
+        c = np.sqrt(2)  # In theory should be np.sqrt(2), but we can test other parameters
+
+        exploitation_term = node.max_val / node.number_of_visits
+        exploration_term = np.sqrt(np.log(node.number_of_visits) / node.number_of_visits)
+
+        return exploitation_term + c * exploration_term
+
+    def child_node_selection(self, selection_function):
+        # Nodes not expanded yet come first
+        if len(self.untried_moves) > 0:
+            return self.node_expansion(self.untried_moves[0])
+
         best_ucb1 = 0
-        best_child_node = None # should be MonteCarloTreeSearchNode
+        best_child_node = None  # should be MonteCarloTreeSearchNode
 
         for child_node in self.children:
-
-            if child_node.is_leaf or child_node.number_of_visits == 0:
-                return child_node
-
-            exploitation_term = child_node.max_val/child_node.number_of_visits
-            exploration_term = np.sqrt(np.log(self.number_of_visits)/child_node.number_of_visits)
-            ucb1 = exploitation_term + c * exploration_term
-
+            ucb1 = selection_function(child_node)
             if ucb1 > best_ucb1:
                 best_ucb1 = ucb1
                 best_child_node = child_node
 
         if best_child_node is None:
-            raise ValueError("No Node selected")
+            raise ValueError("No child node found")
 
         return best_child_node
-    
-    def node_expansion(self):
-        while self.has_untried_move():
-            untried_move: BasicMove = self.untried_moves.pop()
-            child_game_state, child_moves = self.game_state.apply_move(untried_move)
-            child_node = MonteCarloTreeSearchNode(child_game_state, self, untried_move, child_moves)
-            self.children.append(child_node)
+
+    def node_expansion(self, untried_move: BasicMove):
+        # Remove untried_move from self.untried_moves
+        # Be careful: DO NOT REMOVE UNTRIED_MOVE FROM THE LIST BEFORE CALLING THIS METHOD
+        if untried_move in self.untried_moves:
+            self.untried_moves.remove(untried_move)
+        else :
+            raise ValueError("The move is not in the untried moves list")
+
+        # Create the child node
+        child_game_state, child_moves = self.game_state.apply_move(untried_move)
+        child_node = MonteCarloTreeSearchNode(child_game_state, self, untried_move, child_moves)
+
+        # Add child_node to the children list
+        self.children.append(child_node)
+        return child_node
+
+    def is_terminal(self) -> bool:
+        return self.parent_move.command == MoveEnum.END_TURN
             
-    def playout(self): # Must return a MonteCarloTreeSearchNode
+    def playout(self, heuristic): # Must return a MonteCarloTreeSearchNode
+
+        if self.is_terminal():
+            return self
+
         terminal_node = None
         # NEEDS TO BE IMPLEMENTED
         # return terminal_node
@@ -74,21 +92,32 @@ class MonteCarloTreeSearchNode:
 class MonteCarloTreeSearch:
     def __init__(self, game_state: GameState, possible_moves: list[BasicMove]):
         self.root = MonteCarloTreeSearchNode(game_state, None, None, possible_moves) # root has no parent
-        self.root.node_expansion()
         self.heuristic = utilityFunction_MIXMAXAVERAGERES
-        
-    def move_choice(self): # si potrebbe chiamare play ma non vorrei fare confusione con la funzione play del bot
 
-        while some_time_left():
-            selected_child_node = self.root.child_node_selection()
+    def some_time_left(self) -> bool:
+        return True  # NEEDS TO BE IMPLEMENTED
+        
+    def tree_building(self):
+
+        current_node = self.root
+
+        while self.some_time_left():
+            selected_child_node = current_node.child_node_selection(MonteCarloTreeSearchNode.my_ucb1)
             if selected_child_node.is_leaf:
                 terminal_node: MonteCarloTreeSearchNode = selected_child_node.playout()
                 val = terminal_node.evaluate_terminal_node(self.heuristic)
                 terminal_node.backpropagate(val)
-                
+                current_node = self.root
+            elif not selected_child_node.is_leaf:
+                current_node = selected_child_node
+
+        self.move_choice()
+
+    def move_choice(self):
+
         max_val = -1
         move = None
-                
+
         for child in self.root.children:
             if child.max_val > max_val:
                 max_val = child.max_val
