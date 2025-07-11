@@ -15,6 +15,8 @@ class MonteCarloTreeSearchNode:
         self.parent_move: BasicMove = parent_move
         if untried_moves is None:
             self.untried_moves: list[BasicMove] = []
+        else:
+            self.untried_moves = untried_moves
         self.children: list[MonteCarloTreeSearchNode] = []
         self.number_of_visits = 0 # N(n)
         self.max_val = 0 # U(n)
@@ -135,14 +137,14 @@ class MonteCarloTreeSearch:
         while self.some_time_left():
             selected_child_node = current_node.child_node_selection(MonteCarloTreeSearchNode.my_ucb1)
             if selected_child_node.is_leaf:
-                terminal_node: MonteCarloTreeSearchNode = selected_child_node.playout()
+                terminal_node: MonteCarloTreeSearchNode = selected_child_node.playout(self.heuristic)
                 val = terminal_node.evaluate_terminal_node(self.heuristic)
                 terminal_node.backpropagate(val)
                 current_node = self.root
             elif not selected_child_node.is_leaf:
                 current_node = selected_child_node
 
-        self.move_choice()
+        return self.move_choice()
 
     def move_choice(self):
 
