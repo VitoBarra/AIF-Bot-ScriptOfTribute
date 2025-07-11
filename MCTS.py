@@ -6,8 +6,10 @@ from scripts_of_tribute.move import BasicMove
 
 from BotCommon.Heuristics import utilityFunction_MIXMAXAVERAGERES
 
+import time
+
 class MonteCarloTreeSearchNode:
-    def __init__(self, game_state: GameState, parent=None, parent_move=None, untried_moves=None):
+    def __init__(self, game_state: GameState, untried_moves=None, parent=None, parent_move=None):
         self.game_state: GameState = game_state # it can be obtained with apply_move from the parent game_state
         self.parent: MonteCarloTreeSearchNode = parent
         self.parent_move: BasicMove = parent_move
@@ -56,7 +58,7 @@ class MonteCarloTreeSearchNode:
 
         # Create the child node
         child_game_state, child_moves = self.game_state.apply_move(untried_move)
-        child_node = MonteCarloTreeSearchNode(child_game_state, self, untried_move, child_moves)
+        child_node = MonteCarloTreeSearchNode(child_game_state, child_moves, self, untried_move)
 
         # Add child_node to the children list
         self.children.append(child_node)
@@ -65,24 +67,44 @@ class MonteCarloTreeSearchNode:
     def is_terminal(self) -> bool:
         return self.parent_move.command == MoveEnum.END_TURN
             
-    def playout(self, heuristic): # Must return a MonteCarloTreeSearchNode
+    # def playout_recursive(self, heuristic): # Must return a MonteCarloTreeSearchNode
+    #
+    #     if self.is_terminal():
+    #         return self
+    #
+    #     best_move_val = -1
+    #     best_move = None
+    #
+    #     for untried_move in self.untried_moves:
+    #         child_game_state, _ = self.game_state.apply_move(untried_move)
+    #         val = heuristic(child_game_state)
+    #         if val > best_move_val:
+    #             best_move_val = val
+    #             best_move = untried_move
+    #
+    #     best_child: MonteCarloTreeSearchNode = self.node_expansion(best_move)
+    #
+    #     return best_child.playout_recursive(heuristic)
 
-        if self.is_terminal():
-            return self
+    def playout(self, heuristic):
+        current_node: MonteCarloTreeSearchNode = self
 
-        best_move_val = -1
-        best_move = None
+        while not current_node.is_terminal():
 
-        for untried_move in self.untried_moves:
-            child_game_state, child_moves = self.game_state.apply_move(untried_move)
-            val = heuristic(child_game_state)
-            if val > best_move_val:
-                best_move_val = val
-                best_move = untried_move
+            best_move_val = -1
+            best_move = None
 
-        best_child: MonteCarloTreeSearchNode = self.node_expansion(best_move)
+            for untried_move in current_node.untried_moves:
+                child_game_state, _ = current_node.game_state.apply_move(untried_move)
+                val = heuristic(child_game_state)
+                if val > best_move_val:
+                    best_move_val = val
+                    best_move = untried_move
 
-        return best_child.playout(heuristic)
+            best_child: MonteCarloTreeSearchNode = current_node.node_expansion(best_move)
+            current_node = best_child
+
+        return current_node
     
     def evaluate_terminal_node (self, heuristic):
         return heuristic(self.game_state)
@@ -96,13 +118,16 @@ class MonteCarloTreeSearchNode:
             self.parent.backpropagate(val, False) # Parent is not a leaf
 
 class MonteCarloTreeSearch:
-    def __init__(self, game_state: GameState, possible_moves: list[BasicMove]):
-        self.root = MonteCarloTreeSearchNode(game_state, None, None, possible_moves) # root has no parent
+    def __init__(self, game_state: GameState, possible_moves: list[BasicMove], given_time: int):
+        self.root = MonteCarloTreeSearchNode(game_state, possible_moves) # root has no parent
         self.heuristic = utilityFunction_MIXMAXAVERAGERES
+        self.given_time = given_time # Given time in seconds
+        self.start_time = time.time() # Seconds elapsed from Epoch
 
     def some_time_left(self) -> bool:
-        return True  # NEEDS TO BE IMPLEMENTED
-        
+        time_elapsed = time.time() - self.start_time
+        return time_elapsed < self.given_time
+
     def tree_building(self):
 
         current_node = self.root
