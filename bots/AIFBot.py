@@ -8,6 +8,7 @@ from scripts_of_tribute.move import BasicMove
 
 from BotCommon.CommonCheck import NewPossibleMoveAvailable, CheckForGoalState, IsPriorMoves
 from BotCommon.Heuristics import utilityFunction_MIXMAXAVERAGERES
+from BotCommon.Logging import LogEndOfGame
 
 
 class AIFBot(BaseAI):
@@ -93,26 +94,6 @@ class AIFBot(BaseAI):
         return best_move
 
     def game_end(self, end_game_state: EndGameState, final_state: GameState):
-        # Example how you can log your game for further analysis
-        log_dir = "logs"
-        os.makedirs(log_dir, exist_ok=True)
+        LogEndOfGame(self.bot_name,end_game_state, final_state)
 
-        filename = f"game_log_{final_state.state_id}_{end_game_state.winner}.log"
-        filepath = os.path.join(log_dir, filename)
-
-        try:
-            with open(filepath, "w", encoding="utf-8") as f:
-                f.write(f"=== Game Ended ===\n")
-                f.write(f"Winner: {end_game_state.winner}\n")
-                f.write(f"Reason: {end_game_state.reason}\n")
-                f.write(f"Context: {end_game_state.AdditionalContext}\n\n")
-                f.write("=== Completed Actions ===\n")
-
-                for action in final_state.completed_actions:
-                    f.write(action + "\n")
-
-            print(f"[INFO] Game log saved to: {filepath}")
-
-        except Exception as e:
-            print(f"[ERROR] Failed to save game log: {e}")
 
