@@ -1,17 +1,16 @@
-﻿import os
-import random
+﻿import random
 
 from scripts_of_tribute.base_ai import BaseAI
 from scripts_of_tribute.board import GameState, EndGameState
 from scripts_of_tribute.enums import MoveEnum, PlayerEnum
 from scripts_of_tribute.move import BasicMove
 
-from BotCommon.CommonCheck import NewPossibleMoveAvailable, CheckForGoalState, IsPriorMoves
-from BotCommon.Heuristics import utilityFunction_MIXMAXAVERAGERES
+from BotCommon.CommonCheck import NewPossibleMoveAvailable, IsPriorMoves
+from BotCommon.Heuristics import utilityFunction_MMHVR
 from BotCommon.Logging import LogEndOfGame
 
 
-class AIFBot(BaseAI):
+class AIFBot_MMHVR(BaseAI):
 
     ## ========================SET UP========================
     def __init__(self, bot_name,depth):
@@ -59,7 +58,7 @@ class AIFBot(BaseAI):
             return float('inf')
 
         if depth == 0 or not NewPossibleMoveAvailable(new_moves):
-            return utilityFunction_MIXMAXAVERAGERES(local_game_state)
+            return utilityFunction_MMHVR(local_game_state)
 
         move_value=[]
         for new_move in new_moves:

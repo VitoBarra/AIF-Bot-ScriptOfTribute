@@ -7,9 +7,9 @@ from scripts_of_tribute.game import Game
 
 from ExampleBot.MaxPrestigeBot import MaxPrestigeBot
 from ExampleBot.RandomBot import RandomBot
-from bots.AIFBot import AIFBot
+from bots.AIFBot_MMHVR import AIFBot_MMHVR
 from bots.AIFBot_MCTS import AIFBotMCTS
-from bots.AIFBot_WithMoveSaving import AIFBotMoveSaving
+from bots.AIFBot_MMHVR_MS import AIFBot_MMHVR_MS
 
 #=====Settings=====
 LOG_FOLDER_NAME = "logs"
@@ -71,15 +71,15 @@ if __name__ == "__main__":
 
     depth = 2
     maxPrestige_name     = f"MAX_Prestige_2_Moves"
-    aif_name             = f"AIFBOT_Moves_{depth}"
+    aif_MMHVR_name       = f"AIFBOT_MMHVR_{depth}_Moves"
     aif_MCTS_name        = f"AIFBOT_MCTS"
-    aif_MoveSaving_name  = f"AIFBOT_moveSaving_Moves_{depth}"
+    aif_MoveSaving_name  = f"AIFBOT_moveSaving_{depth}_Moves"
     random_name          = f"RandomBot"
 
     bot_maxPrestige      = MaxPrestigeBot  (bot_name=maxPrestige_name)
-    bot_aif              = AIFBot          (bot_name=aif_name,depth=depth)
+    bot_MMHVR_aif        = AIFBot_MMHVR    (bot_name=aif_MMHVR_name, depth=depth)
     bot_aif_MCTS         = AIFBotMCTS      (bot_name=aif_MCTS_name)
-    bot_aif_MoveSaving   = AIFBotMoveSaving(bot_name=aif_MoveSaving_name,depth=depth)
+    bot_aif_MoveSaving   = AIFBot_MMHVR_MS (bot_name=aif_MoveSaving_name, depth=depth)
     bot_random           = RandomBot       (bot_name=random_name)
 
     CleanUpLogs()

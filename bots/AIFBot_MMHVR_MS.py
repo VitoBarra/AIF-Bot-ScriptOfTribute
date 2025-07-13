@@ -61,7 +61,7 @@ class AIFBotMoveSaving(BaseAI):
             return float('inf'), [move]
 
         if depth == 0 or not NewPossibleMoveAvailable(new_moves):
-            return utilityFunction_MIXMAXAVERAGERES(local_game_state), [move]
+            return utilityFunction_MMHVR(local_game_state), [move]
 
         move_value=[]
         for new_move in new_moves:
