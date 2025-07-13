@@ -53,7 +53,7 @@ def CalculateFavor(game_state:GameState, player_id):
 def CalculateCoinLeft(game_state: GameState):
     return game_state.current_player.coins
 
-def utilityFunction_MIXMAXAVERAGERES(game_state: GameState) ->float:
+def utilityFunction_MMHVR(game_state: GameState) ->float:
         top_hand_coin,bottom_hand_coin, average_Hand_coin, average_singleCard_coin = CalculateMaxMinAverageCoin(game_state)
         top_hand_PEP,bottom_hand_PEP, average_Hand_PEP, average_singleCard_PEP = CalculateMaxMinAveragePowerAndPrestige(game_state)
         favor = CalculateFavor(game_state, game_state.current_player.player_id)

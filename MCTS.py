@@ -138,8 +138,8 @@ class MonteCarloTreeSearch:
         while self.some_time_left()  and (self.max_playout < 0 or self.max_playout > playoutCount ):
             selected_child_node:MonteCarloTreeSearchNode = current_node.child_node_selection()
             if selected_child_node.is_leaf():
-                playoutCount += 1
                 terminal_node: MonteCarloTreeSearchNode = selected_child_node.playout()
+                playoutCount += 1
                 node_evaluation = self.evaluation_function(terminal_node.game_state)
                 terminal_node.backpropagate(node_evaluation)
                 current_node = self.root
@@ -150,5 +150,3 @@ class MonteCarloTreeSearch:
 
     def select_best_move(self) -> BasicMove:
         return max(self.root.Children, key=lambda c: (c.max_val, c.number_of_visits)).move
-
-
