@@ -6,7 +6,7 @@ from scripts_of_tribute.board import GameState, EndGameState
 from scripts_of_tribute.enums import MoveEnum, PlayerEnum
 from scripts_of_tribute.move import BasicMove
 
-from BotCommon.CommonCheck import IsPriorMoves
+from BotCommon.CommonCheck import IsPriorMoves, MakePriorChoice
 from MCTS import MonteCarloTreeSearch
 from BotCommon.Logging import LogEndOfGame
 from BotCommon.Heuristics import utilityFunction_MMHVR
@@ -36,9 +36,15 @@ class AIFBotMCTS(BaseAI):
             return possible_moves[0]
 
         for move in possible_moves:
-            if IsPriorMoves(move,game_state):
+            if IsPriorMoves(move):
                 # Return the first prior move encountered
                 return move
+
+        best_choice = MakePriorChoice(game_state, possible_moves, utilityFunction_MMHVR)
+        if best_choice is not None:
+            print(f"    Prior choice found:  {best_choice.command}")
+            return best_choice
+
 
         #Move Evaluation
         monte_carlo_tree_search = MonteCarloTreeSearch(game_state, possible_moves, floor(remaining_time/len(possible_moves)), utilityFunction_MMHVR,500)

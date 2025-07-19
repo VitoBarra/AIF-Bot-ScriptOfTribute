@@ -32,15 +32,24 @@ def MatchCommand(move: BasicMove, move_list: list[BasicMove]):
         case MoveEnum.END_TURN | _:
             return next(m for m in move_list if m.command == MoveEnum.END_TURN)
 
-def IsPriorMoves(move: BasicMove, game_state: GameState) -> bool:
-    if isinstance(move, SimpleCardMove) and move.command != MoveEnum.BUY_CARD:
-        return True
-    elif isinstance(move, MakeChoiceMoveUniqueEffect) and move.command == MoveEnum.MAKE_CHOICE:
+def IsPriorMoves(move: BasicMove) -> bool:
+    return isinstance(move, SimpleCardMove) and move.command != MoveEnum.BUY_CARD
 
-        return True
-    else:
-        #print(f"Command: {move.command}, Type: {type(move).__name__}")
-        return False
+def MakePriorChoice(game_state:GameState, possible_moves: list[BasicMove], heuristic) -> MakeChoiceMoveUniqueEffect | None:
+    choice = [mv for mv in possible_moves if isinstance(mv, MakeChoiceMoveUniqueEffect)]
+    if len(choice) != len(possible_moves):
+        return None
+
+    best_move_value = float('-inf')
+    best_move = None
+
+    for move in choice:
+        new_game_state,_ = game_state.apply_move(move)
+        move_value = heuristic(new_game_state)
+        if move_value > best_move_value:
+            best_move_value = move_value
+            best_move = move
+    return best_move
 
 
 def depth_sample(game_state: GameState, possible_moves:list[BasicMove]) -> tuple[int, list[float]]:
@@ -74,3 +83,4 @@ def estimate_depth(game_state: GameState, possible_moves:list[BasicMove]) -> tup
     bf_mean = np.nanmean(bs_masked, axis=0).astype(float).tolist()
 
     return max_sample_depth, bf_mean
+
