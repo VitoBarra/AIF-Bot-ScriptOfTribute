@@ -77,7 +77,7 @@ class AIFBot_MMHVR(BaseAI):
 
 
         for move in possible_moves:
-            if IsPriorMoves(move, game_state):
+            if IsPriorMoves(move):
                 # Return the first prior move encountered
                 return move
 
