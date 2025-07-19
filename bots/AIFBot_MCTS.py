@@ -1,6 +1,8 @@
 import random
 from math import floor
+from typing import Any
 
+import numpy as np
 from scripts_of_tribute.base_ai import BaseAI
 from scripts_of_tribute.board import GameState, EndGameState
 from scripts_of_tribute.enums import MoveEnum, PlayerEnum
@@ -27,6 +29,40 @@ class AIFBotMCTS(BaseAI):
 
 
     ## ========================Functionality========================
+    @staticmethod
+    def depth_sample(game_state: GameState, possible_moves:list[BasicMove]) -> tuple[int, list[Any]]:
+        current_game_state = game_state
+        current_possible_moves = possible_moves
+        sample_branching_factors= []
+
+        while len(current_possible_moves)>1:
+            sample_branching_factors.append(len(current_possible_moves))
+            current_possible_moves = [move for move in current_possible_moves if move.command != MoveEnum.END_TURN]
+            current_possible_move = random.choice(current_possible_moves)
+            current_game_state, current_possible_moves = current_game_state.apply_move(current_possible_move)
+
+
+        return len(sample_branching_factors), sample_branching_factors
+
+    @staticmethod
+    def estimate_depth(game_state: GameState, possible_moves:list[BasicMove]) -> tuple[int, Any]:
+        max_sample_depth = 0
+        bs = []
+        for i in range(100):
+            sample_depth, sample_branching_factors = AIFBotMCTS.depth_sample(game_state, possible_moves)
+            bs.append(sample_branching_factors)
+            if sample_depth > max_sample_depth:
+                max_sample_depth = sample_depth
+
+        # mediate on branching factors
+        bs = [np.array(x) for x in bs]
+        max_len = max(len(x) for x in bs)
+        bs_padded = np.array([np.pad(x, (0, max_len - len(x))) for x in bs])
+        bs_masked = np.where(bs_padded == 0, np.nan, bs_padded)
+        mean = np.nanmean(bs_masked, axis=0).astype(float).tolist()
+
+        return max_sample_depth, mean
+
     def play(self, game_state: GameState, possible_moves:list[BasicMove], remaining_time: int) -> BasicMove:
         #Set Up
         if self.start_of_game:
