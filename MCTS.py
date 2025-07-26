@@ -85,13 +85,18 @@ class MonteCarloTreeSearchNode:
         return best_child_node
 
 
-    def playout(self) -> 'MonteCarloTreeSearchNode':
+    def playout(self, depthMap) -> 'MonteCarloTreeSearchNode':
         current_node: MonteCarloTreeSearchNode = self
 
+        depth = 0
         while not current_node.is_terminal():
             # randomly select semple the non-deterministic state space
             current_node.expand_node()
             current_node: MonteCarloTreeSearchNode = random.choice(current_node.Children)
+            depth += 1
+
+        depthMap[depth] = depthMap.get(depth, 0) + 1
+
 
         # Expand the terminal node to get the game state and possible moves
         current_node.expand_node()
@@ -111,8 +116,11 @@ class MonteCarloTreeSearchNode:
             self.parent.backpropagate(val)  # Parent is not a leaf
 
 class MonteCarloTreeSearch:
+    early_stopping_time = 0
+
     def __init__(self, game_state: GameState, possible_moves: list[BasicMove],
-                 given_time: int, eval_function, max_playout=-1, ):
+                 given_time: int, eval_function, max_playout=-1):
+        self.depthMap = {}
         self.root = MonteCarloTreeSearchNode(game_state, possible_moves) # root has no parent
         self.evaluation_function = eval_function
         self.given_time_ms = given_time
@@ -138,15 +146,46 @@ class MonteCarloTreeSearch:
         while self.some_time_left()  and (self.max_playout < 0 or self.max_playout > playoutCount ):
             selected_child_node:MonteCarloTreeSearchNode = current_node.child_node_selection()
             if selected_child_node.is_leaf():
-                terminal_node: MonteCarloTreeSearchNode = selected_child_node.playout()
                 playoutCount += 1
+                terminal_node: MonteCarloTreeSearchNode = selected_child_node.playout(self.depthMap)
                 node_evaluation = self.evaluation_function(terminal_node.game_state)
                 terminal_node.backpropagate(node_evaluation)
                 current_node = self.root
             else:
                 current_node = selected_child_node
 
+        self.print_monte_carlo_statistics()
         return self.select_best_move()
 
     def select_best_move(self) -> BasicMove:
-        return max(self.root.Children, key=lambda c: (c.max_val, c.number_of_visits)).move
+        best_move = max(self.root.Children, key=lambda c: (c.max_val, c.number_of_visits))
+        print (f"Best move: {best_move.parent_move.command} with max value {best_move.max_val} was visites {best_move.number_of_visits} times, move children {len(self.root.Children)};")
+        if best_move.parent_move.command == MoveEnum.END_TURN and len(self.root.Children) > 1:
+            MonteCarloTreeSearch.early_stopping_time += 1
+            print (f"Early stopping time: {MonteCarloTreeSearch.early_stopping_time} times, move ignored {len(self.root.Children)}. End Turn with score {best_move.max_val} and visits {best_move.number_of_visits} times")
+            for child in self.root.Children:
+                if child.parent_move.command != MoveEnum.END_TURN:
+                    print(f"    ignored move: {child.parent_move.command} with max value {child.max_val} was visites {child.number_of_visits} times")
+
+        return best_move.parent_move
+
+
+
+
+
+    def print_monte_carlo_statistics(self) -> None:
+        visit_list = [child.number_of_visits for child in self.root.Children]
+        total_visit = sum(visit_list)
+        total_depth_visits = sum(self.depthMap.values())
+        if total_visit != total_depth_visits :
+            print(f"[Warning]: total visit count {total_visit} does not match total depth visits {total_depth_visits}")
+
+        depth_summary = {
+            depth: f"{count} ({(count / total_depth_visits) * 100:.2f}%)"
+            for depth, count in sorted(self.depthMap.items())
+        }
+        print("Monte Carlo Tree Search statistics:")
+        print(f"   time left: {self.given_time_ms - ((time.perf_counter() - self.start_time) * 1000):.4f} ms, playout executed {total_visit}")
+        print(f"   visit distribution: {visit_list}")
+        print(f"   depth distribution: {depth_summary}")
+
