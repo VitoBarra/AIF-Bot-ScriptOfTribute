@@ -5,21 +5,22 @@ from scripts_of_tribute.board import GameState, EndGameState
 from scripts_of_tribute.enums import MoveEnum, PlayerEnum
 from scripts_of_tribute.move import BasicMove
 
-from BotCommon.CommonCheck import NewPossibleMoveAvailable, IsPriorMoves
-from BotCommon.Heuristics import utilityFunction_MMHVR
+from BotCommon.CommonCheck import NewPossibleMoveAvailable, IsPriorMoves, CheckForGoalState
+from BotCommon.Heuristics import CalculateWeightedUtility_MMHVR
 from BotCommon.Logging import LogEndOfGame
 
 
 class AIFBot_MMHVR(BaseAI):
 
     ## ========================SET UP========================
-    def __init__(self, bot_name,depth):
+    def __init__(self, bot_name: str, depth:int, weights:np.ndarray=None, functions:list[str] = None):
         super().__init__(bot_name)
         self.player_id: PlayerEnum = PlayerEnum.NO_PLAYER_SELECTED
         self.start_of_game: bool = True
         self.depth: int = depth
         self.best_moves:list[BasicMove] = []
-
+        self.Weights = weights
+        self.Functions = functions
 
     def select_patron(self, available_patrons):
         pick = random.choice(available_patrons)
@@ -27,7 +28,6 @@ class AIFBot_MMHVR(BaseAI):
 
 
     ## ========================Functionality========================
-
     def ExploreMoveAvailable(self, possible_moves:list[BasicMove], game_state:GameState) -> BasicMove:
         if not NewPossibleMoveAvailable(possible_moves):
             # if there are no moves possible, select the end of turn move
@@ -40,7 +40,7 @@ class AIFBot_MMHVR(BaseAI):
                 # skip the END_TURN command
                 continue
 
-            curr_val = self.EvaluateMove(evaluating_move,game_state,self.depth-1)
+            curr_val = self.EvaluateMove(evaluating_move, game_state, self.depth-1)
             if curr_val == float('inf'):
                 # Goal State founded can return early
                 return evaluating_move
@@ -58,7 +58,7 @@ class AIFBot_MMHVR(BaseAI):
             return float('inf')
 
         if depth == 0 or not NewPossibleMoveAvailable(new_moves):
-            return utilityFunction_MMHVR(local_game_state)
+            return self.UtilityFunction(local_game_state)
 
         move_value=[]
         for new_move in new_moves:
@@ -68,6 +68,8 @@ class AIFBot_MMHVR(BaseAI):
 
         return max(move_value)
 
+    def UtilityFunction(self, game_state: GameState) -> float:
+        return CalculateWeightedUtility_MMHVR(game_state, self.Weights, self.Functions)
 
     def play(self, game_state: GameState, possible_moves:list[BasicMove], remaining_time: int) -> BasicMove:
         #Set Up
@@ -92,7 +94,9 @@ class AIFBot_MMHVR(BaseAI):
 
         return best_move
 
+
+
     def game_end(self, end_game_state: EndGameState, final_state: GameState):
-        LogEndOfGame(self.bot_name,end_game_state, final_state)
+        LogEndOfGame(self.bot_name, end_game_state, final_state)
 
 
