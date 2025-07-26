@@ -1,5 +1,6 @@
 import random
 import time
+from typing import Callable
 
 import numpy as np
 
@@ -85,18 +86,48 @@ class MonteCarloTreeSearchNode:
         return best_child_node
 
 
-    def playout(self, depthMap) -> 'MonteCarloTreeSearchNode':
+    def playout_policy_greedy_heuristic(self, eval_function:Callable) -> 'MonteCarloTreeSearchNode':
+        for node in self.Children:
+            node.expand_node()
+        move_value = {node: eval_function(node.game_state) for node in self.Children}
+        for node in self.Children:
+            node.Children = []  # Clear the children to avoid memory leaks
+            node.possible_moves = []
+        return max(move_value, key=move_value.get)
+
+    def playout_policy_greedy_heuristic_lookAhead(self, eval_function:Callable) -> 'MonteCarloTreeSearchNode':
+        move_value = {}
+        for node in self.Children:
+            node.expand_node()
+            move_value[node] = eval_function(node.game_state)  # Evaluate the game state of the node valued as the baseline of the move
+            for child in node.Children:
+                child.expand_node()
+                val = eval_function(child.game_state)
+                if node not in move_value or val > move_value[node]:
+                    move_value[node] = val # Update the move value if the child has a better value to guide the search
+
+        return max(move_value, key=move_value.get)
+
+
+
+    def playout_policy_random(self) -> 'MonteCarloTreeSearchNode':
+        return random.choice(self.Children)
+
+
+
+    def playout(self, eval_function, depthMap) -> 'MonteCarloTreeSearchNode':
         current_node: MonteCarloTreeSearchNode = self
 
         depth = 0
         while not current_node.is_terminal():
             # randomly select semple the non-deterministic state space
             current_node.expand_node()
-            current_node: MonteCarloTreeSearchNode = random.choice(current_node.Children)
+            # current_node: MonteCarloTreeSearchNode = current_node.playout_policy_random()
+            # current_node: MonteCarloTreeSearchNode = current_node.playout_policy_greedy_heuristic(eval_function)
+            current_node: MonteCarloTreeSearchNode = current_node.playout_policy_greedy_heuristic_lookAhead(eval_function)
+
             depth += 1
-
         depthMap[depth] = depthMap.get(depth, 0) + 1
-
 
         # Expand the terminal node to get the game state and possible moves
         current_node.expand_node()
@@ -147,7 +178,7 @@ class MonteCarloTreeSearch:
             selected_child_node:MonteCarloTreeSearchNode = current_node.child_node_selection()
             if selected_child_node.is_leaf():
                 playoutCount += 1
-                terminal_node: MonteCarloTreeSearchNode = selected_child_node.playout(self.depthMap)
+                terminal_node: MonteCarloTreeSearchNode = selected_child_node.playout(self.evaluation_function,self.depthMap)
                 node_evaluation = self.evaluation_function(terminal_node.game_state)
                 terminal_node.backpropagate(node_evaluation)
                 current_node = self.root
