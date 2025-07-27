@@ -10,7 +10,7 @@ from scripts_of_tribute.move import BasicMove
 from BotCommon.CommonCheck import IsPriorMoves, MakePriorChoice
 from MCTS import MonteCarloTreeSearch
 from BotCommon.Logging import LogEndOfGame
-from BotCommon.Heuristics import  CalculateWeightedUtility_MMHVR
+from BotCommon.Heuristics import CalculateWeightedUtility_MMHVR, utilityFunction_PrestigeAndPower
 
 
 class AIFBotMCTS(BaseAI):
@@ -58,6 +58,7 @@ class AIFBotMCTS(BaseAI):
 
         #Move Evaluation
         start_time = time.perf_counter()
+        # monte_carlo_tree_search = MonteCarloTreeSearch(game_state, possible_moves, floor(remaining_time/len(possible_moves)), utilityFunction_PrestigeAndPower, 500)
         monte_carlo_tree_search = MonteCarloTreeSearch(game_state, possible_moves, floor(remaining_time/len(possible_moves)), self.CalculateWeightedUtility_MMHVR, 500)
         best_move = monte_carlo_tree_search.MonteCarloSearch()
         elapsed_time_ms = (time.perf_counter() - start_time) * 1000
