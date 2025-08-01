@@ -1,5 +1,6 @@
 import random
 import time
+import copy
 from typing import Callable
 
 import numpy as np
@@ -113,10 +114,25 @@ class MonteCarloTreeSearchNode:
     def playout_policy_random(self) -> 'MonteCarloTreeSearchNode':
         return random.choice(self.Children)
 
+    def deterministic_test(self):
+        pgs = self.parent.game_state
+        sgs1, ps1 = pgs.apply_move(self.parent_move)
+        sgs1.initial_seed = 48
 
+        for pick in ps1:
+            sgs2, ps2 = sgs1.apply_move(pick)
+            sgs21, ps21 = sgs1.apply_move(pick)
+            for tavern_card2 in sgs2.tavern_available_cards:
+                for tavern_card21 in sgs21.tavern_available_cards:
+                    if tavern_card2.name != tavern_card21.name:
+                        pass
+            if len(ps2) != len(ps21):
+                pass
 
     def playout(self, eval_function, depthMap) -> 'MonteCarloTreeSearchNode':
         current_node: MonteCarloTreeSearchNode = self
+
+        # self.deterministic_test()
 
         depth = 0
         while not current_node.is_terminal():
