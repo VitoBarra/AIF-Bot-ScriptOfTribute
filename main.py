@@ -1,7 +1,7 @@
 ﻿from ExampleBot.MaxPrestigeBot import MaxPrestigeBot
 from ExampleBot.RandomBot import RandomBot
 from Helper.GameManager import RunGames
-from HeuristicLerning.EvolutionaryHeuristic import evolutionary_algorithm
+from HeuristicLearning.EvolutionaryHeuristic import evolutionary_algorithm
 from Helper.LoggerFilesHelper import CleanUpLogs
 from bots.AIFBot_MMHVR import AIFBot_MMHVR
 from bots.AIFBot_MCTS import AIFBotMCTS
@@ -13,6 +13,9 @@ RUN_NUM = 30
 THREAD_NUM = 5
 
 
+def Evolve():
+    ind = evolutionary_algorithm(20,  200, 2, 5, 10, 13,True)
+    ind.save("individual",1)
 
 def MakeRun():
     depth = 2
@@ -35,4 +38,5 @@ def MakeRun():
 if __name__ == "__main__":
     # results_from_log()
     CleanUpLogs()
-    MakeRun()
+    # MakeRun()
+    Evolve()

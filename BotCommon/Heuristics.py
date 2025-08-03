@@ -5,6 +5,7 @@ from scripts_of_tribute.board import GameState
 from scripts_of_tribute.enums import PlayerEnum
 
 from BotCommon.CommonCheck import CheckForGoalState
+from HeuristicLearning.ActivationFunctions import ACTIVATION_FUNCTION_NAME_MAP
 
 
 def utilityFunction_PrestigeAndPower( game_state):
@@ -82,5 +83,6 @@ def CalculateWeightedUtility_MMHVR(game_state: GameState, weights:np.ndarray = N
     weighted_MMHVR_values = weights * MMHVR_param if weights is not None  else MMHVR_param
     if functions is not None:
         for i in range(param_dimension):
-            weighted_MMHVR_values[i] = functions[i](weighted_MMHVR_values[i])
+            act_fun =  ACTIVATION_FUNCTION_NAME_MAP[functions[i]]
+            weighted_MMHVR_values[i] = act_fun(weighted_MMHVR_values[i])
     return float(np.sum(weighted_MMHVR_values))
