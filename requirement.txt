@@ -1,3 +1,6 @@
 scripts-of-tribute
 numpy
 tqdm
+torch
+torchvision
+torchaudio
