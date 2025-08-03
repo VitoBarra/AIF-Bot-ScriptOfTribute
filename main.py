@@ -13,6 +13,9 @@ RUN_NUM = 30
 THREAD_NUM = 5
 
 
+def Evolve():
+    ind = evolutionary_algorithm(20,  200, 2, 5, 10, 13,True)
+    ind.save("individual",1)
 
 def MakeRun():
     depth = 2
@@ -35,4 +38,5 @@ def MakeRun():
 if __name__ == "__main__":
     # results_from_log()
     CleanUpLogs()
-    MakeRun()
+    # MakeRun()
+    Evolve()
