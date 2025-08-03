@@ -1,5 +1,7 @@
 ﻿import random
-
+import numpy as np
+import os
+import csv
 from scripts_of_tribute.base_ai import BaseAI
 from scripts_of_tribute.board import GameState, EndGameState
 from scripts_of_tribute.enums import MoveEnum, PlayerEnum
@@ -8,6 +10,7 @@ from scripts_of_tribute.move import BasicMove
 from BotCommon.CommonCheck import NewPossibleMoveAvailable, IsPriorMoves, CheckForGoalState
 from BotCommon.Heuristics import CalculateWeightedUtility_MMHVR
 from Helper.Logging import LogEndOfGame
+from HeuristicLearning import RESULTS_PATH
 
 
 
@@ -100,4 +103,9 @@ class AIFBot_MMHVR(BaseAI):
     def game_end(self, end_game_state: EndGameState, final_state: GameState):
         LogEndOfGame(self.bot_name, end_game_state, final_state)
 
+        won = 1 if self.player_id == final_state.current_player.player_id else 0
 
+        file = os.path.join(RESULTS_PATH, f'{self.bot_name}_res.csv')
+        with open(file, 'a', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow([self.bot_name, won])
