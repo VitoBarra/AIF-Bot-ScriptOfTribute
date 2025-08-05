@@ -9,8 +9,8 @@ from scripts_of_tribute.move import BasicMove
 
 from BotCommon.CommonCheck import IsPriorMoves, MakePriorChoice
 from MCTS import MonteCarloTreeSearch
-from BotCommon.Logging import LogEndOfGame
-from BotCommon.Heuristics import  CalculateWeightedUtility_MMHVR
+from Helper.Logging import LogEndOfGame
+from BotCommon.Heuristics import CalculateWeightedUtility_MMHVR
 
 
 class AIFBotMCTS(BaseAI):

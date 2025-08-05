@@ -3,10 +3,12 @@ import os
 
 from scripts_of_tribute.board import EndGameState, GameState
 
+from Helper import LOG_FOLDER_NAME
+
 
 def LogEndOfGame(bot_name:str, end_game_state: EndGameState, final_state: GameState):
     # Example how you can log your game for further analysis
-    log_dir = "logs"
+    log_dir = LOG_FOLDER_NAME
     os.makedirs(log_dir, exist_ok=True)
 
     current_time = datetime.now().strftime("%Y%m%d_%H%M%S")

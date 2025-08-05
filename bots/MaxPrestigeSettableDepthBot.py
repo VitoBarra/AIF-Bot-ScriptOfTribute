@@ -1,6 +1,4 @@
 ﻿import random
-import os
-
 from scripts_of_tribute.base_ai import BaseAI
 from scripts_of_tribute.board import GameState, EndGameState
 from scripts_of_tribute.enums import PlayerEnum, MoveEnum
@@ -8,7 +6,7 @@ from scripts_of_tribute.enums import PlayerEnum, MoveEnum
 
 from BotCommon.CommonCheck import NewPossibleMoveAvailable, CheckForGoalState
 from BotCommon.Heuristics import utilityFunction_PrestigeAndPower
-from BotCommon.Logging import LogEndOfGame
+from Helper.Logging import LogEndOfGame
 
 
 class MaxPrestigeSettableDepthBot(BaseAI):

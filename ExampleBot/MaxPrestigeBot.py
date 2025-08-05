@@ -5,7 +5,7 @@ from scripts_of_tribute.base_ai import BaseAI
 from scripts_of_tribute.board import EndGameState, GameState
 from scripts_of_tribute.enums import PlayerEnum, MoveEnum
 
-from BotCommon.Logging import LogEndOfGame
+from Helper.Logging import LogEndOfGame
 
 
 class MaxPrestigeBot(BaseAI):

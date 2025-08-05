@@ -1,0 +1,1 @@
+LOG_FOLDER_NAME = "logs"
