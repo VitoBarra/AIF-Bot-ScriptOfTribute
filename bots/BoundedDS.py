@@ -3,20 +3,23 @@ from scripts_of_tribute.base_ai import BaseAI
 from scripts_of_tribute.board import GameState, EndGameState
 from scripts_of_tribute.enums import PlayerEnum, MoveEnum
 
-
 from BotCommon.CommonCheck import NewPossibleMoveAvailable, CheckForGoalState
 from BotCommon.Heuristics import utilityFunction_PrestigeAndPower
 from Helper.Logging import LogEndOfGame
 
 
-class MaxPrestigeSettableDepthBot(BaseAI):
+class BoundedDS(BaseAI):
 
     ## ========================SET UP========================
-    def __init__(self, bot_name,depth):
+    def __init__(self, bot_name,depth, evaluation_function = None):
         super().__init__(bot_name)
         self.player_id: PlayerEnum = PlayerEnum.NO_PLAYER_SELECTED
         self.start_of_game: bool = True
         self.depth: int = depth
+        if evaluation_function is None:
+            self.evaluation_function = utilityFunction_PrestigeAndPower
+        else:
+            self.evaluation_function = evaluation_function
 
     def select_patron(self, available_patrons):
         pick = random.choice(available_patrons)
@@ -52,7 +55,7 @@ class MaxPrestigeSettableDepthBot(BaseAI):
             return float('inf')
 
         if depth == 0 or not NewPossibleMoveAvailable(new_moves):
-            return utilityFunction_PrestigeAndPower(local_game_state)
+            return self.evaluation_function(local_game_state)
 
         move_value=[]
         for new_move in new_moves:
