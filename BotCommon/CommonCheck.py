@@ -9,6 +9,20 @@ from scripts_of_tribute.move import BasicMove, SimpleCardMove, MakeChoiceMoveUni
 def CheckForGoalState(game_state, player_id) -> bool:
     return game_state.end_game_state is not None and game_state.end_game_state.winner == player_id
 
+def obtain_move_semantic_id(move:BasicMove) -> tuple[int,int|tuple]:
+    if move is None:
+        return None,None
+    if hasattr(move, 'cardUniqueId'):
+        return move.command.value, move.cardUniqueId
+    elif hasattr(move, 'patronId'):
+        return move.command.value, int(move.patronId.value)
+    elif hasattr(move, 'cardsUniqueIds'):
+        return move.command.value, tuple(move.cardsUniqueIds)
+    elif hasattr(move, 'effects'):
+        return move.command.value, tuple(move.effects)
+    else:
+        return move.command.value, -1
+
 
 def NewPossibleMoveAvailable(moves:list[BasicMove]) -> bool:
     return not (len(moves) == 1 and moves[0].command == MoveEnum.END_TURN)
