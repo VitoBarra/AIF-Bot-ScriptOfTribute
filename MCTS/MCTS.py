@@ -1,6 +1,5 @@
 import random
 import time
-import copy
 from typing import Callable
 
 import numpy as np
@@ -9,6 +8,7 @@ from scripts_of_tribute.board import GameState # EndGameState is an attribute of
 from scripts_of_tribute.enums import MoveEnum
 from scripts_of_tribute.move import BasicMove
 
+from MCTS.Common import calculate_ucb
 
 
 class MonteCarloTreeSearchNode:
@@ -55,21 +55,10 @@ class MonteCarloTreeSearchNode:
             self.Children.append(MonteCarloTreeSearchNode(None,None,self, move))
         return self
 
-
-    @staticmethod
-    def calculate_ucb1_value(node: 'MonteCarloTreeSearchNode') -> float:
-        #The theoretical value of c is sqrt(2), but only if  exploitation_term is in ranger [0,1]
-        #that is not the case here, so we can use any value for c
-        c = np.sqrt(2)
-
-        exploitation_term = node.average_value
-
-        if node.number_of_visits == 0:
-            exploration_term = float('inf')  # If the node has never been visited, we want to explore it
-        else:
-            exploration_term = np.sqrt(np.log(node.parent.number_of_visits) / node.number_of_visits)
-
-        return exploitation_term + c * exploration_term
+    def calculate_ucb1_value(self) -> float:
+        if self.parent is None:
+            raise ValueError("Parent node is not set, cannot calculate UCB1 value on the root node")
+        return calculate_ucb(self.max_val, self.parent.number_of_visits, self.average_value)
 
 
     def child_node_selection(self) -> 'MonteCarloTreeSearchNode':
@@ -77,7 +66,7 @@ class MonteCarloTreeSearchNode:
         best_child_node:MonteCarloTreeSearchNode|None = None
 
         for child_node in self.Children:
-            ucb1 = self.calculate_ucb1_value(child_node)
+            ucb1 = child_node.calculate_ucb1_value()
             if ucb1 > best_ucb1:
                 best_ucb1 = ucb1
                 best_child_node = child_node
@@ -114,25 +103,8 @@ class MonteCarloTreeSearchNode:
     def playout_policy_random(self) -> 'MonteCarloTreeSearchNode':
         return random.choice(self.Children)
 
-    def deterministic_test(self):
-        pgs = self.parent.game_state
-        sgs1, ps1 = pgs.apply_move(self.parent_move)
-        sgs1.initial_seed = 48
-
-        for pick in ps1:
-            sgs2, ps2 = sgs1.apply_move(pick)
-            sgs21, ps21 = sgs1.apply_move(pick)
-            for tavern_card2 in sgs2.tavern_available_cards:
-                for tavern_card21 in sgs21.tavern_available_cards:
-                    if tavern_card2.name != tavern_card21.name:
-                        pass
-            if len(ps2) != len(ps21):
-                pass
-
     def playout(self, eval_function, depthMap) -> 'MonteCarloTreeSearchNode':
         current_node: MonteCarloTreeSearchNode = self
-
-        # self.deterministic_test()
 
         depth = 0
         while not current_node.is_terminal():
