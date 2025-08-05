@@ -7,7 +7,8 @@ from scripts_of_tribute.move import BasicMove
 
 from BotCommon.CommonCheck import NewPossibleMoveAvailable, IsPriorMoves, CheckForGoalState
 from BotCommon.Heuristics import CalculateWeightedUtility_MMHVR
-from BotCommon.Logging import LogEndOfGame
+from Helper.Logging import LogEndOfGame
+
 
 
 class AIFBot_MMHVR(BaseAI):
