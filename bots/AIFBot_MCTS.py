@@ -8,16 +8,16 @@ from scripts_of_tribute.enums import MoveEnum, PlayerEnum
 from scripts_of_tribute.move import BasicMove
 
 from BotCommon.CommonCheck import IsPriorMoves, MakePriorChoice
-from MCTS import MonteCarloTreeSearch
 from Helper.Logging import LogEndOfGame
-from BotCommon.Heuristics import CalculateWeightedUtility_MMHVR
 
+from MCTS.mcts2 import MCTS2
 
 class AIFBotMCTS(BaseAI):
 
     ## ========================SET UP========================
-    def __init__(self, bot_name, weights=None, functions=None):
+    def __init__(self, bot_name, evaluation_function, weights=None, functions=None):
         super().__init__(bot_name)
+        self.evaluation_function = evaluation_function
         self.player_id: PlayerEnum = PlayerEnum.NO_PLAYER_SELECTED
         self.start_of_game: bool = True
         self.best_moves:list[BasicMove] = []
@@ -30,8 +30,8 @@ class AIFBotMCTS(BaseAI):
 
 
     ## ========================Functionality========================
-    def CalculateWeightedUtility_MMHVR(self, game_state: GameState) -> float:
-        return CalculateWeightedUtility_MMHVR(game_state,self.Weights,self.Functions)
+    def UtilityFunction(self, game_state: GameState) -> float:
+        return self.evaluation_function(game_state, self.Weights, self.Functions, self.player_id)
 
     def play(self, game_state: GameState, possible_moves:list[BasicMove], remaining_time: int) -> BasicMove:
         #Set Up
@@ -50,7 +50,7 @@ class AIFBotMCTS(BaseAI):
                 print(f"    Prior move   found:  {move.command}")
                 return move
 
-        best_choice = MakePriorChoice(game_state, possible_moves, self.CalculateWeightedUtility_MMHVR)
+        best_choice = MakePriorChoice(game_state, possible_moves, self.UtilityFunction)
         if best_choice is not None:
             print(f"    Prior choice found:  {best_choice.command}")
             return best_choice
@@ -58,8 +58,12 @@ class AIFBotMCTS(BaseAI):
 
         #Move Evaluation
         start_time = time.perf_counter()
-        monte_carlo_tree_search = MonteCarloTreeSearch(game_state, possible_moves, floor(remaining_time/len(possible_moves)), self.CalculateWeightedUtility_MMHVR, 500)
-        best_move = monte_carlo_tree_search.MonteCarloSearch()
+        # monte_carlo_tree_search = MonteCarloTreeSearch(game_state, possible_moves, floor(remaining_time/len(possible_moves)), self.UtilityFunction, 500)
+        # best_move = monte_carlo_tree_search.MonteCarloSearch()
+
+        monte_carlo_tree_search = MCTS2(game_state, possible_moves, remaining_time, self.player_id, self.UtilityFunction)
+        best_move = monte_carlo_tree_search.move_choice(500)
+
         elapsed_time_ms = (time.perf_counter() - start_time) * 1000
         print(f"MONTE CARLO SELECTION Elapsed:")
         print(f"    time: {elapsed_time_ms} ms, remining time: {remaining_time} ms")
