@@ -8,7 +8,7 @@ from BotCommon.CommonCheck import CheckForGoalState
 from HeuristicLearning.ActivationFunctions import ACTIVATION_FUNCTION_NAME_MAP
 
 
-def utilityFunction_PrestigeAndPower( game_state):
+def utilityFunction_PrestigeAndPower(game_state):
     return game_state.current_player.prestige + game_state.current_player.power
 
 
@@ -74,8 +74,8 @@ def utilityFunction_MMHVR(game_state: GameState) ->np.ndarray:
         return param
 
 def CalculateWeightedUtility_MMHVR(game_state: GameState, weights:np.ndarray = None, functions =None) -> float:
-    if CheckForGoalState(game_state,game_state.current_player):
-        return float('inf')
+    # if CheckForGoalState(game_state,game_state.current_player):
+    #     return float('inf')
 
     MMHVR_param =  utilityFunction_MMHVR(game_state)
     param_dimension = MMHVR_param.shape[0]
