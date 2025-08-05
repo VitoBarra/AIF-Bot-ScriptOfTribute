@@ -140,8 +140,7 @@ def PlayGames(population : List[Individual], run_n: int, num_games: int):
             adv:Individual = random.choice(pop_filtered_temp)
             pop_filtered_temp.remove(adv)
             bot_MMHVR_aif_adv = AIFBot_MMHVR(aif_MMHVR_name_Adversary,depth,adv.weights,adv.activations)
-            RunGames(bot_MMHVR_aif_col, aif_MMHVR_name_collect, bot_MMHVR_aif_adv, aif_MMHVR_name_Adversary,
-                     runs=run_n, threads=max_supported_thread, hide_print=True)
+            RunGames(bot_MMHVR_aif_col, bot_MMHVR_aif_adv, runs=run_n, threads=max_supported_thread, hide_print=True)
             UpdateIndividualStat(adv, aif_MMHVR_name_Adversary)
             RemoveTempResults(aif_MMHVR_name_Adversary)
         UpdateIndividualStat(selected, aif_MMHVR_name_collect)
