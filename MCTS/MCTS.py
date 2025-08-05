@@ -1,6 +1,5 @@
 import random
 import time
-import copy
 from typing import Callable
 
 import numpy as np
@@ -8,8 +7,6 @@ import numpy as np
 from scripts_of_tribute.board import GameState # EndGameState is an attribute of GameState
 from scripts_of_tribute.enums import MoveEnum
 from scripts_of_tribute.move import BasicMove
-
-
 
 class MonteCarloTreeSearchNode:
     def __init__(self, game_state: GameState = None, possible_moves=None, parent=None, parent_move=None):
