@@ -6,10 +6,11 @@ from typing import Callable, List
 import numpy as np
 from tqdm import tqdm
 
+from BotCommon.Heuristics import utilityFunction_MMHVR_plain
 from Helper.GameManager import RunGames
 from HeuristicLearning import CHECK_POINTS_PATH, INDIVIDUALS_PATH, RESULTS_PATH
 from HeuristicLearning.ActivationFunctions import ACTIVATION_NAMES, Linear
-from bots.AIFBot_MMHVR import AIFBot_MMHVR
+from bots.BoundedDS import BoundedDS
 
 #====================Evolutionary Algorithm Implementation================
 class Individual:
@@ -133,13 +134,13 @@ def PlayGames(population : List[Individual], run_n: int, num_games: int):
     for idx, selected in enumerate(tqdm(population, desc="Individuals", colour="green", leave=True, ncols=80, position=0)):
         pop_filtered = [adv for adv in population if adv != selected]
         pop_filtered_temp = pop_filtered.copy()
-        bot_MMHVR_aif_col = AIFBot_MMHVR(aif_MMHVR_name_collect, depth, selected.weights, selected.activations)
+        bot_MMHVR_aif_col = BoundedDS(aif_MMHVR_name_collect, depth,utilityFunction_MMHVR_plain, selected.weights, selected.activations,True)
         for _ in tqdm(range(1, num_games + 1), desc=f"   Games for current Individual", leave=False, ncols=80, position=1):
             if len(pop_filtered_temp) <= 0:
                 pop_filtered_temp =  pop_filtered.copy()
             adv:Individual = random.choice(pop_filtered_temp)
             pop_filtered_temp.remove(adv)
-            bot_MMHVR_aif_adv = AIFBot_MMHVR(aif_MMHVR_name_Adversary,depth,adv.weights,adv.activations)
+            bot_MMHVR_aif_adv = BoundedDS(aif_MMHVR_name_Adversary,depth,utilityFunction_MMHVR_plain,adv.weights,adv.activations,True)
             RunGames(bot_MMHVR_aif_col, bot_MMHVR_aif_adv, runs=run_n, threads=max_supported_thread, hide_print=True)
             UpdateIndividualStat(adv, aif_MMHVR_name_Adversary)
             RemoveTempResults(aif_MMHVR_name_Adversary)
