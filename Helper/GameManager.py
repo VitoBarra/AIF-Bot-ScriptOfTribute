@@ -4,7 +4,7 @@ from Helper.HidePrint import HiddenPrints
 ## This file is needed primarily to avoid circular imports
 
 
-def RunGames(bot_1, name_1, bot_2 ,name_2,runs=30, threads=5, hide_print=False):
+def RunGames(bot_1, bot_2,runs=30, threads=5, hide_print=False):
 
     if hide_print:
         HiddenPrints.HidePrint()
@@ -14,8 +14,8 @@ def RunGames(bot_1, name_1, bot_2 ,name_2,runs=30, threads=5, hide_print=False):
     game.register_bot(bot_2)
 
     game.run(
-        name_1,
-        name_2,
+        bot_1.bot_name,
+        bot_2.bot_name,
         start_game_runner=True,
         runs=runs ,
         threads=threads

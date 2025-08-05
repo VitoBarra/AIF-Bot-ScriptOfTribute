@@ -29,10 +29,7 @@ def MakeRun():
     bot_aif_MCTS         = AIFBotMCTS      (bot_name=aif_MCTS_name)
     bot_random           = RandomBot       (bot_name=random_name)
 
-
-    RunGames(bot_aif_MCTS, aif_MCTS_name, bot_maxPrestige, maxPrestige_name,
-             runs=RUN_NUM, threads=THREAD_NUM, hide_print=HIDE_PRINT)
-
+    RunGames(bot_aif_MCTS, bot_maxPrestige, runs=RUN_NUM, threads=THREAD_NUM, hide_print=HIDE_PRINT)
 
 
 if __name__ == "__main__":
