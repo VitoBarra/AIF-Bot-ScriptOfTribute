@@ -7,29 +7,28 @@ from scripts_of_tribute.board import GameState, EndGameState
 from scripts_of_tribute.enums import MoveEnum, PlayerEnum
 from scripts_of_tribute.move import BasicMove
 
-from BotCommon.CommonCheck import NewPossibleMoveAvailable, IsPriorMoves, CheckForGoalState
-from BotCommon.Heuristics import CalculateWeightedUtility_MMHVR
+from BotCommon.CommonCheck import NewPossibleMoveAvailable, CheckForGoalState, IsPriorMoves, MakePriorChoice
+from BotCommon.Heuristics import GameStateEvaluatorUtility
 from Helper.Logging import LogEndOfGame
 from HeuristicLearning import RESULTS_PATH
 
 
-
-class AIFBot_MMHVR(BaseAI):
+class BoundedDS(BaseAI):
 
     ## ========================SET UP========================
-    def __init__(self, bot_name: str, depth:int, weights:np.ndarray=None, functions:list[str] = None):
+    def __init__(self, bot_name: str, depth:int, evaluation_function:GameStateEvaluatorUtility, weights:np.ndarray=None, functions:list[str] = None, use_prior_move: bool = False):
         super().__init__(bot_name)
         self.player_id: PlayerEnum = PlayerEnum.NO_PLAYER_SELECTED
         self.start_of_game: bool = True
         self.depth: int = depth
-        self.best_moves:list[BasicMove] = []
+        self.evaluation_function =  evaluation_function
         self.Weights = weights
         self.Functions = functions
+        self.UsePriorMove = use_prior_move
 
     def select_patron(self, available_patrons):
         pick = random.choice(available_patrons)
         return pick
-
 
     ## ========================Functionality========================
     def ExploreMoveAvailable(self, possible_moves:list[BasicMove], game_state:GameState) -> BasicMove:
@@ -73,20 +72,22 @@ class AIFBot_MMHVR(BaseAI):
         return max(move_value)
 
     def UtilityFunction(self, game_state: GameState) -> float:
-        return CalculateWeightedUtility_MMHVR(game_state, self.Weights, self.Functions)
+        return self.evaluation_function(game_state, self.Weights, self.Functions)
 
     def play(self, game_state: GameState, possible_moves:list[BasicMove], remaining_time: int) -> BasicMove:
-        #Set Up
+        # Set Up
         if self.start_of_game:
             self.player_id = game_state.current_player.player_id
             self.start_of_game = False
 
+        if self.UsePriorMove:
+            for move in possible_moves:
+                if IsPriorMoves(move):
+                    return move
 
-        for move in possible_moves:
-            if IsPriorMoves(move):
-                # Return the first prior move encountered
-                return move
-
+            best_choice = MakePriorChoice(game_state, possible_moves, self.UtilityFunction)
+            if best_choice is not None:
+                return best_choice
 
         # Move Evaluation
         best_move = self.ExploreMoveAvailable(possible_moves, game_state)
@@ -97,8 +98,6 @@ class AIFBot_MMHVR(BaseAI):
             print("unexpected game state, returning end of turn")
 
         return best_move
-
-
 
     def game_end(self, end_game_state: EndGameState, final_state: GameState):
         LogEndOfGame(self.bot_name, end_game_state, final_state)
