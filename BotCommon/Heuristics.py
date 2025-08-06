@@ -7,10 +7,22 @@ from scripts_of_tribute.enums import PlayerEnum
 from BotCommon.CommonCheck import CheckForGoalState
 from HeuristicLearning.ActivationFunctions import ACTIVATION_FUNCTION_NAME_MAP
 
+def utility_boost (game_state, utility, player_id):
+    if game_state.end_game_state is not None:
+        if game_state.end_game_state.winner == player_id:
+            utility *= 3
+        elif game_state.end_game_state.winner != player_id:
+            utility *= 0.5
 
-def utilityFunction_PrestigeAndPower(game_state):
-    return game_state.current_player.prestige + game_state.current_player.power
+    return utility
 
+def utilityFunction_PrestigeAndPower(game_state, player_id = None):
+    utility = game_state.current_player.prestige + game_state.current_player.power
+
+    if player_id is not None:
+        utility = utility_boost(game_state, utility, player_id)
+
+    return utility
 
 def HandStatistics(game_state: GameState, regex):
     cards = game_state.current_player.draw_pile + game_state.current_player.hand + game_state.current_player.cooldown_pile
@@ -73,10 +85,7 @@ def utilityFunction_MMHVR(game_state: GameState) ->np.ndarray:
 
         return param
 
-def CalculateWeightedUtility_MMHVR(game_state: GameState, weights:np.ndarray = None, functions =None) -> float:
-    # if CheckForGoalState(game_state,game_state.current_player):
-    #     return float('inf')
-
+def CalculateWeightedUtility_MMHVR(game_state: GameState, weights:np.ndarray = None, functions =None, player_id = None) -> float:
     MMHVR_param =  utilityFunction_MMHVR(game_state)
     param_dimension = MMHVR_param.shape[0]
 
@@ -85,4 +94,9 @@ def CalculateWeightedUtility_MMHVR(game_state: GameState, weights:np.ndarray = N
         for i in range(param_dimension):
             act_fun =  ACTIVATION_FUNCTION_NAME_MAP[functions[i]]
             weighted_MMHVR_values[i] = act_fun(weighted_MMHVR_values[i])
-    return float(np.sum(weighted_MMHVR_values))
+    utility = float(np.sum(weighted_MMHVR_values))
+
+    if player_id is not None:
+        utility = utility_boost(game_state, utility, player_id)
+
+    return utility

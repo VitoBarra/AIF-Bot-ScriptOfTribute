@@ -69,15 +69,7 @@ class MCTS2:
         random.seed(16)
 
     def evaluation(self, game_state: GameState) -> float:
-        val = self.evaluation_function(game_state)
-
-        if game_state.end_game_state is not None:
-            if game_state.end_game_state.winner == self.player_id:
-                return val * 3
-            elif game_state.end_game_state.winner != self.player_id:
-                return val * 0.5
-
-        return val
+        return self.evaluation_function(game_state)
 
     def playout_and_back_prop(self, node, game_state):
         terminal_game_state = MCTS.playout(node.parent_move, game_state, self.player_id)
