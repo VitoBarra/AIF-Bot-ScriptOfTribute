@@ -1,4 +1,4 @@
-﻿from BotCommon.Heuristics import CalculateWeightedUtility_MMHVR, utilityFunction_PrestigeAndPower
+﻿from BotCommon.Heuristics import utilityFunction_PrestigeAndPower, utilityFunction_MMHVR
 from ExampleBot.RandomBot import RandomBot
 from Helper.GameManager import RunGames
 from HeuristicLearning.EvolutionaryHeuristic import evolutionary_algorithm
@@ -27,9 +27,9 @@ def MakeRun():
     random_name                = f"RandomBot"
 
     bot_BoundedDS_WMMHVR       = BoundedDS                    (bot_name=BoundedDS_WMMHVR_name, depth=depth,
-                                                               evaluation_function= CalculateWeightedUtility_MMHVR)
+                                                               evaluation_function= utilityFunction_MMHVR)
     bot_aif_MCTS_WMMHVR        = AIFBotMCTS                   (bot_name=aif_MCTS_WMMHVR_name,
-                                                               evaluation_function= CalculateWeightedUtility_MMHVR)
+                                                               evaluation_function= utilityFunction_MMHVR)
     bot_aif_MCTS_Max_Prestige  = AIFBotMCTS                   (bot_name=aif_MCTS_maxPrestige_name,
                                                                evaluation_function= utilityFunction_PrestigeAndPower)
     bot_random                 = RandomBot                    (bot_name=random_name)
