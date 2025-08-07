@@ -40,7 +40,7 @@ def MakeRun():
                                                                evaluation_function= utilityFunction_PrestigeAndPower)
     bot_random                 = RandomBot                    (bot_name=random_name)
 
-    RunGames(bot_aif_MCTS_WMMHVR, bot_maxPrestige, runs=RUN_NUM, threads=THREAD_NUM, hide_print=HIDE_PRINT)
+    RunGames(bot_aif_MCTS_WMMHVR, bot_BoundedDS_WMMHVR, runs=RUN_NUM, threads=THREAD_NUM, hide_print=HIDE_PRINT)
 
 
 if __name__ == "__main__":
