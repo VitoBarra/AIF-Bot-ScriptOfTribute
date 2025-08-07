@@ -1,10 +1,11 @@
 ﻿import re
+from typing import Callable
+
 import numpy as np
 
 from scripts_of_tribute.board import GameState
 from scripts_of_tribute.enums import PlayerEnum
 
-from BotCommon.CommonCheck import CheckForGoalState
 from HeuristicLearning.ActivationFunctions import ACTIVATION_FUNCTION_NAME_MAP
 
 def utility_boost (game_state, utility, player_id):
@@ -16,12 +17,8 @@ def utility_boost (game_state, utility, player_id):
 
     return utility
 
-def utilityFunction_PrestigeAndPower(game_state, player_id = None):
+def utilityFunction_PrestigeAndPower(game_state, *args, **kwargs):
     utility = game_state.current_player.prestige + game_state.current_player.power
-
-    if player_id is not None:
-        utility = utility_boost(game_state, utility, player_id)
-
     return utility
 
 def HandStatistics(game_state: GameState, regex):
@@ -68,8 +65,26 @@ def CalculateFavor(game_state:GameState, player_id):
 def CalculateCoinLeft(game_state: GameState):
     return game_state.current_player.coins
 
+
 #MINMAX HAND VALUE RATING
-def utilityFunction_MMHVR(game_state: GameState) ->np.ndarray:
+def MMHVR_plain_values(game_state: GameState) ->np.ndarray:
+        top_hand_coin,bottom_hand_coin, average_Hand_coin, average_singleCard_coin = CalculateMaxMinAverageCoin(game_state)
+        top_hand_PEP,bottom_hand_PEP, average_Hand_PEP, average_singleCard_PEP = CalculateMaxMinAveragePowerAndPrestige(game_state)
+        favor     = CalculateFavor(game_state, game_state.current_player.player_id)
+        coin_left = CalculateCoinLeft(game_state)
+        prestige  = game_state.current_player.prestige
+        power     = game_state.current_player.power
+
+
+        param   = np.array([top_hand_coin,bottom_hand_coin, average_Hand_coin, average_singleCard_coin,
+                            top_hand_PEP,bottom_hand_PEP, average_Hand_PEP, average_singleCard_PEP,
+                            prestige, power,
+                            favor, coin_left, game_state.enemy_player.prestige])
+
+        return param
+
+#MINMAX HAND VALUE RATING
+def MMHVR_values(game_state: GameState ) ->np.ndarray:
         top_hand_coin,bottom_hand_coin, average_Hand_coin, average_singleCard_coin = CalculateMaxMinAverageCoin(game_state)
         top_hand_PEP,bottom_hand_PEP, average_Hand_PEP, average_singleCard_PEP = CalculateMaxMinAveragePowerAndPrestige(game_state)
         favor     = CalculateFavor(game_state, game_state.current_player.player_id)
@@ -85,16 +100,43 @@ def utilityFunction_MMHVR(game_state: GameState) ->np.ndarray:
 
         return param
 
-def CalculateWeightedUtility_MMHVR(game_state: GameState, weights:np.ndarray = None, functions =None, player_id = None) -> float:
-    MMHVR_param =  utilityFunction_MMHVR(game_state)
-    param_dimension = MMHVR_param.shape[0]
+def utilityFunction_MMHVR(game_state: GameState, *args, **kwargs):
+    return np.sum(MMHVR_values(game_state))
 
-    weighted_MMHVR_values = weights * MMHVR_param if weights is not None  else MMHVR_param
+def utilityFunction_MMHVR_plain(game_state: GameState, *args, **kwargs):
+    return np.sum(MMHVR_plain_values(game_state))
+
+
+
+GameStateEvaluator = Callable[[GameState], np.ndarray]
+
+def CalculateWeightedUtility(utility_function:GameStateEvaluator, game_state: GameState, weights:np.ndarray = None, functions =None) -> float:
+
+    param =  utility_function(game_state)
+    param_dimension = param.shape[0]
+
+    weighted_values = weights * param if weights is not None  else param
     if functions is not None:
         for i in range(param_dimension):
             act_fun =  ACTIVATION_FUNCTION_NAME_MAP[functions[i]]
-            weighted_MMHVR_values[i] = act_fun(weighted_MMHVR_values[i])
-    utility = float(np.sum(weighted_MMHVR_values))
+            weighted_values[i] = act_fun(weighted_values[i])
+    return float(np.sum(weighted_values))
+
+
+GameStateEvaluatorUtility = Callable[[GameState,], float]
+
+def WeightedUtilityFunction_MMHVR(game_state: GameState, weights:np.ndarray = None, functions =None, player_id = None, *args, **kwargs) -> float:
+    utility = CalculateWeightedUtility(MMHVR_values, game_state, weights, functions)
+
+    if player_id is not None:
+        utility = utility_boost(game_state, utility, player_id)
+
+    return utility
+
+
+
+def WeightedUtilityFunction_MMHVR_plain(game_state: GameState, weights:np.ndarray = None, functions =None, player_id = None, *args, **kwargs) -> float:
+    utility = CalculateWeightedUtility(MMHVR_plain_values, game_state, weights, functions)
 
     if player_id is not None:
         utility = utility_boost(game_state, utility, player_id)
