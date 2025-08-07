@@ -8,7 +8,7 @@ from scripts_of_tribute.enums import MoveEnum, PlayerEnum
 from scripts_of_tribute.move import BasicMove
 
 from BotCommon.CommonCheck import NewPossibleMoveAvailable, IsPriorMoves, CheckForGoalState
-from BotCommon.Heuristics import CalculateWeightedUtility_MMHVR
+from BotCommon.Heuristics import WeightedUtilityFunction_MMHVR
 from Helper.Logging import LogEndOfGame
 
 
@@ -73,7 +73,7 @@ class AIFBot_MMHVR(BaseAI):
         return max(move_value)
 
     def UtilityFunction(self, game_state: GameState) -> float:
-        return CalculateWeightedUtility_MMHVR(game_state, self.Weights, self.Functions)
+        return WeightedUtilityFunction_MMHVR(game_state, self.Weights, self.Functions)
 
     def play(self, game_state: GameState, possible_moves:list[BasicMove], remaining_time: int) -> BasicMove:
         #Set Up
