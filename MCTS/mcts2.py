@@ -92,11 +92,12 @@ class MCTS:
             if new_child is None:
                 actual_node = MCTS.selection(actual_node.children, actual_possible_moves)
 
+                actual_node.update_parent_move(actual_possible_moves)
+
                 if actual_node.parent_move.command == MoveEnum.END_TURN:
                     self.playout_and_back_prop(actual_node, actual_game_state)
                     break
 
-                actual_node.update_parent_move(actual_possible_moves)
                 actual_game_state, actual_possible_moves = actual_game_state.apply_move(actual_node.parent_move)
 
             elif new_child is not None:
