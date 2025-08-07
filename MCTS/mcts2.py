@@ -15,8 +15,7 @@ class Node:
         self.number_of_playouts = 0
         self.total_utility = 0
 
-    def expand(self, move: BasicMove):
-        semantic_id = obtain_move_semantic_id(move)
+    def expand(self, move: BasicMove, semantic_id: tuple):
         child = NotRootNode(self, move)
         self.children[semantic_id] = child
 
@@ -24,7 +23,7 @@ class Node:
         for move in possible_moves:
             semantic_id = obtain_move_semantic_id(move)
             if semantic_id not in self.children:
-                self.expand(move)
+                self.expand(move, semantic_id)
                 return self.children[semantic_id]
         return None
 
@@ -142,6 +141,9 @@ class MCTS:
 
         best_move = random.choice(self.root.possible_moves)
         best_utility = float('-inf')
+
+        if len(self.root.children.values()) != len(self.root.possible_moves):
+            raise ValueError("Incoherence between possible moves and children")
 
         nodes = self.root.children.values()
         for node in nodes:
