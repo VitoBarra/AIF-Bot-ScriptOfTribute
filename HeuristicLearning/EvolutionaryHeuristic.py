@@ -152,6 +152,43 @@ def ReadCheckPointNum(pop_size: int, param_num: int) -> List[int]:
     return [int(f.split('gen')[-1].split(".")[0]) for f in os.listdir(CHECK_POINTS_PATH)
             if f.startswith(f"checkpoint_pop{pop_size}_par{param_num}")]
 
+def CalculateConvergenceMetrics(population: List[Individual]) -> dict:
+    """
+    Calculate convergence metrics for the population.
+    Returns a dictionary with mean, std, and unique activations.
+    """
+    if len(population) == 0:
+        raise ValueError("population is empty")
+
+    weights = np.array([ind.weights for ind in population])
+    activations_list = np.stack([np.asarray(ind.activations) for ind in population])
+
+    # count unique values vertically (per neuron / per column)
+    unique_activation = [int(np.unique(activations_list[:, j]).size)
+                         for j in range(activations_list.shape[1])]
+
+
+    return {
+        "mean_weights": weights.mean(axis=0),
+        "std_weights": weights.std(axis=0),
+        "unique_activations": unique_activation,
+    }
+
+def PrintConvergenceMetrics(population: List[Individual], gen_num:int) -> None:
+    met = CalculateConvergenceMetrics(population)
+
+    # Helper to print a row: name + all values
+    def print_row(name, values):
+        vals_str = " ".join(f"{v:10.6f}" if isinstance(v, (float, int)) else str(v) for v in values)
+        print(f"{name:20} {vals_str}")
+
+    print(f"Convergence Metrics for Generation {gen_num}:")
+    print("=" * 50)
+    print_row("mean_weights", met['mean_weights'])
+    print_row("std_weights", met['std_weights'])
+    print_row("unique_activations", met['unique_activations'])
+    print("=" * 50)
+
 def evolutionary_algorithm(
     pop_size: int,
     generations: int,
@@ -190,6 +227,7 @@ def evolutionary_algorithm(
 
     elites =[]
     for gen in range(last_saved_gen,generations):
+        PrintConvergenceMetrics(population, gen)
         PlayGames(population,runs_for_each_game, GAME_NUM)
 
         fitnesses = [ind.WinTime / ind.NumOfGames for ind in population]
