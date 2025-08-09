@@ -174,6 +174,33 @@ def CalculateConvergenceMetrics(population: List[Individual]) -> dict:
         "unique_activations": unique_activation,
     }
 
+def ReadAllCheckPoints(pop_size: int, param_num: int) -> List[List[Individual]]:
+    gens_num = ReadCheckPointNum(pop_size, param_num)
+    gens_num.sort()
+    gens = []
+    for gen in gens_num:
+        population = LoadCheckPoint(gen, pop_size, param_num)
+
+        if not population:
+            raise  Exception(f"No population found in checkpoint for gen {gen} with pop size {pop_size} and param num {param_num}")
+
+        gens.append(population)
+    return gens
+
+
+def SanitizeCheckPoint(pop:list[Individual],gen_num: int, pop_size: int, param_num: int) -> None:
+        sanitized_population = []
+        for p in pop:
+            # placeholder in case of future sanitization
+            sanitized_population.append(p)
+        PrintConvergenceMetrics(sanitized_population, gen_num)
+        SaveCheckPoint(sanitized_population, gen_num, pop_size, param_num )
+
+
+def SanitizeAllCheckpoints(pop_size:int, param_num:int) -> None:
+    for gen_num, pop in enumerate(ReadAllCheckPoints(pop_size, param_num)):
+        SanitizeCheckPoint(pop, gen_num, pop_size, param_num)
+
 def PrintConvergenceMetrics(population: List[Individual], gen_num:int) -> None:
     met = CalculateConvergenceMetrics(population)
 
