@@ -1,6 +1,7 @@
 import csv
 import os
 import random
+import re
 from typing import Callable, List
 
 import numpy as np
@@ -38,6 +39,24 @@ class Individual:
         weights = data["weights"]
         activations = data["activations"].tolist()
         return Individual(weights, activations)
+
+
+    @staticmethod
+    def LoadLatest(filename: str) -> "Individual":
+        pattern = re.compile(rf"{re.escape(filename)}_V(\d+)\.npz$")
+
+        candidates = [
+            (int(match.group(1)), f)
+            for f in os.listdir(INDIVIDUALS_PATH)
+            if (match := pattern.match(f))
+        ]
+
+        if not candidates:
+            raise FileNotFoundError(f"No saved versions found for {filename} in {INDIVIDUALS_PATH}")
+
+        version, _ = max(candidates, key=lambda x: x[0])
+        return Individual.load(filename, version)
+
 
 def initialize_population(pop_size: int, param_num: int) -> List[Individual]:
     population: List[Individual] = []
