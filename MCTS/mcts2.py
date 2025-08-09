@@ -98,7 +98,11 @@ class MCTS:
                     self.playout_and_back_prop(actual_node, actual_game_state)
                     break
 
-                actual_game_state, actual_possible_moves = actual_game_state.apply_move(actual_node.parent_move)
+                try:
+                    actual_game_state, actual_possible_moves = actual_game_state.apply_move(actual_node.parent_move)
+                except Exception as e:
+                    print(e)
+                    raise ValueError ("problems with apply_move")
 
             elif new_child is not None:
                 self.playout_and_back_prop(new_child, actual_game_state)
@@ -106,7 +110,11 @@ class MCTS:
     @staticmethod
     def playout(move: BasicMove, game_state: GameState, player_id) -> GameState:
         while not (CheckForGoalState(game_state, player_id) or move.command == MoveEnum.END_TURN):
-            game_state, possible_moves = game_state.apply_move(move)
+            try:
+                game_state, possible_moves = game_state.apply_move(move)
+            except Exception as e:
+                print(e)
+                raise ValueError ("problems with apply_move")
             move = random.choice(possible_moves)
         return game_state
 
