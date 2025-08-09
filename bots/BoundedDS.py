@@ -1,44 +1,48 @@
 ﻿import random
+import numpy as np
+import os
+import csv
 from scripts_of_tribute.base_ai import BaseAI
 from scripts_of_tribute.board import GameState, EndGameState
-from scripts_of_tribute.enums import PlayerEnum, MoveEnum
+from scripts_of_tribute.enums import MoveEnum, PlayerEnum
+from scripts_of_tribute.move import BasicMove
 
 from BotCommon.CommonCheck import NewPossibleMoveAvailable, CheckForGoalState
-from BotCommon.Heuristics import utilityFunction_PrestigeAndPower
+from BotCommon.Heuristics import GameStateEvaluatorUtility
 from Helper.Logging import LogEndOfGame
 
 
 class BoundedDS(BaseAI):
 
     ## ========================SET UP========================
-    def __init__(self, bot_name,depth, evaluation_function = None):
+    def __init__(self, bot_name: str, depth:int, evaluation_function:GameStateEvaluatorUtility, weights:np.ndarray=None, functions:list[str] = None, seed: int = None):
         super().__init__(bot_name)
         self.player_id: PlayerEnum = PlayerEnum.NO_PLAYER_SELECTED
         self.start_of_game: bool = True
         self.depth: int = depth
-        if evaluation_function is None:
-            self.evaluation_function = utilityFunction_PrestigeAndPower
-        else:
-            self.evaluation_function = evaluation_function
+        self.evaluation_function =  evaluation_function
+        self.seed = seed if seed is not None else random.randint(0, 2 ** 64)
+        self.Weights = weights
+        self.Functions = functions
 
     def select_patron(self, available_patrons):
         pick = random.choice(available_patrons)
         return pick
 
     ## ========================Functionality========================
-    def ExploreMoveAvailable(self, possible_moves, game_state):
+    def ExploreMoveAvailable(self, possible_moves:list[BasicMove], game_state:GameState) -> BasicMove:
         if not NewPossibleMoveAvailable(possible_moves):
-            # If there are no moves possible, select the end of turn move
+            # if there are no moves possible, select the end of turn move
             return possible_moves[0]
 
         best_move = None
         best_move_val = float("-inf")
         for evaluating_move in possible_moves:
             if evaluating_move.command == MoveEnum.END_TURN:
-                # Skip the END_TURN command
+                # skip the END_TURN command
                 continue
 
-            curr_val = self.EvaluateMove(evaluating_move,game_state,self.depth)
+            curr_val = self.EvaluateMove(evaluating_move, game_state, self.depth-1)
             if curr_val == float('inf'):
                 # Goal State founded can return early
                 return evaluating_move
@@ -48,14 +52,15 @@ class BoundedDS(BaseAI):
 
         return best_move
 
-    def EvaluateMove(self,move, game_state, depth:int):
+    def EvaluateMove(self,move, game_state, depth:int)->float:
         # Move Evaluation (Depth first approach)
-        local_game_state, new_moves = game_state.apply_move(move)
+        local_game_state, new_moves = game_state.apply_move(move,self.seed)
+
         if CheckForGoalState(local_game_state,self.player_id):
             return float('inf')
 
         if depth == 0 or not NewPossibleMoveAvailable(new_moves):
-            return self.evaluation_function(local_game_state)
+            return self.UtilityFunction(local_game_state)
 
         move_value=[]
         for new_move in new_moves:
@@ -65,21 +70,32 @@ class BoundedDS(BaseAI):
 
         return max(move_value)
 
-    def play(self, game_state, possible_moves, remaining_time):
+    def UtilityFunction(self, game_state: GameState) -> float:
+        return self.evaluation_function(game_state, self.Weights, self.Functions)
+
+    def play(self, game_state: GameState, possible_moves:list[BasicMove], remaining_time: int) -> BasicMove:
         # Set Up
         if self.start_of_game:
             self.player_id = game_state.current_player.player_id
             self.start_of_game = False
 
         # Move Evaluation
-        bast_move = self.ExploreMoveAvailable(possible_moves, game_state)
+        best_move = self.ExploreMoveAvailable(possible_moves, game_state)
 
         # End of Search
-        if bast_move is None:
-            bast_move = next(move for move in possible_moves if move.command == MoveEnum.END_TURN)
+        if best_move is None:
+            best_move = next(move for move in possible_moves if move.command == MoveEnum.END_TURN)
             print("unexpected game state, returning end of turn")
 
-        return bast_move
+        return best_move
 
     def game_end(self, end_game_state: EndGameState, final_state: GameState):
-        LogEndOfGame(self.bot_name,end_game_state, final_state)
+        LogEndOfGame(self.bot_name, end_game_state, final_state)
+
+        won = 1 if self.player_id == final_state.current_player.player_id else 0
+
+        os.makedirs('temp', exist_ok=True)
+        file = os.path.join('temp', f'{self.bot_name}_res.csv')
+        with open(file, 'a', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow([self.bot_name, won])
