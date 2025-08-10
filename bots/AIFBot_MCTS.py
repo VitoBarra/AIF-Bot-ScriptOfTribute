@@ -8,6 +8,7 @@ from scripts_of_tribute.enums import MoveEnum, PlayerEnum
 from scripts_of_tribute.move import BasicMove
 
 from BotCommon.CommonCheck import IsPriorMoves, MakePriorChoice
+from Helper.Logging import PrintLog
 from Helper.Logging import LogEndOfGame
 
 from MCTS.mcts2 import MCTS2
@@ -35,7 +36,6 @@ class AIFBotMCTS(BaseAI):
 
     def play(self, game_state: GameState, possible_moves:list[BasicMove], remaining_time: int) -> BasicMove:
         #Set Up
-        # print(f"start time: {remaining_time}, ms possible moves: {len(possible_moves)}")
         if self.start_of_game:
             self.player_id = game_state.current_player.player_id
             self.start_of_game = False
@@ -47,14 +47,20 @@ class AIFBotMCTS(BaseAI):
         for move in possible_moves:
             if IsPriorMoves(move):
                 # Return the first prior move encountered
-                print(f"    [Prior move] -> selected move {move.command}")
+                PrintLog(f"PRIOR", f"selected move {move.command} over {len(possible_moves)} possible move with {remaining_time} ms remaining",1)
+                PrintLog("STATE",
+                         f"coin {game_state.current_player.coins}, prestige: {game_state.current_player.prestige}, power: {game_state.current_player.power}",
+                         1)
                 AIFBotMCTS.checks_before_return(move, remaining_time)
                 return move
 
         best_choice = MakePriorChoice(game_state, possible_moves, self.UtilityFunction)
         if best_choice is not None:
-            print(f"    [Prior choice] -> selected move {best_choice.command}")
+            PrintLog(f"PRIOR", f"selected move {best_choice.command} over {len(possible_moves)} with {remaining_time} ms remaining",1)
             AIFBotMCTS.checks_before_return(best_choice, remaining_time)
+            PrintLog("STATE",
+                     f"coin {game_state.current_player.coins}, prestige: {game_state.current_player.prestige}, power: {game_state.current_player.power}",
+                     1)
             return best_choice
 
 
@@ -67,13 +73,13 @@ class AIFBotMCTS(BaseAI):
         best_move = monte_carlo_tree_search.move_choice(500, 1000)
 
         elapsed_time_ms = (time.perf_counter() - start_time) * 1000
-        print(f"    [MCTS] -> selected move {best_move.command} in {elapsed_time_ms} ms")
-        # print(f"        state: coin {game_state.current_player.coins}, prestige: {game_state.current_player.prestige}, power: {game_state.current_player.power}")
+        PrintLog("MCTS",f"selected move {best_move.command} in {elapsed_time_ms:.2f} ms over the {remaining_time} ms remaining and over {len(possible_moves)} moves",1)
+        PrintLog("STATE",f"coin {game_state.current_player.coins}, prestige: {game_state.current_player.prestige}, power: {game_state.current_player.power}",1)
 
         # End of Search
         if best_move is None:
             best_move = next(move for move in possible_moves if move.command == MoveEnum.END_TURN)
-            print("best_move was None, returning end of turn")
+            PrintLog("MCTS","best_move was None, returning end of turn",1)
 
         AIFBotMCTS.checks_before_return(best_move, remaining_time)
         return best_move
@@ -81,7 +87,7 @@ class AIFBotMCTS(BaseAI):
     @staticmethod
     def checks_before_return(move:BasicMove, remaining_time):
         if remaining_time is not None and move.command == MoveEnum.END_TURN:
-            print(f"[End of turn] -> remaining time: {remaining_time} ms")
+            PrintLog(f"END", f"remaining time: {remaining_time} ms", 0)
 
 
     def game_end(self, end_game_state: EndGameState, final_state: GameState):

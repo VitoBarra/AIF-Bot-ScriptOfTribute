@@ -7,6 +7,7 @@ from scripts_of_tribute.move import BasicMove
 from scripts_of_tribute.enums import MoveEnum
 from BotCommon.CommonCheck import obtain_move_semantic_id
 from BotCommon.CommonCheck import CheckForGoalState
+from Helper.Logging import PrintLog
 from MCTS.Common import calculate_ucb
 import random
 
@@ -151,12 +152,12 @@ class MCTS2:
         return best_node
 
     def move_choice(self, max_iterations:int, given_time:int) -> BasicMove:
-        print(f"    [MCTS] -> start move choice with {len(self.root.possible_moves)} possible moves and {max_iterations} iterations with {given_time} ms time limit")
+        PrintLog(f"MCTS", f"start move choice with {len(self.root.possible_moves)} possible moves and {max_iterations} iterations with {given_time} ms time limit",1)
         start_time = time.perf_counter()
         for i in range(max_iterations):
             elapsed_time_ms = (time.perf_counter() - start_time) * 1000
             if elapsed_time_ms - given_time> 150:
-                print(f"    [MCTS] -> early stopping time {elapsed_time_ms} ms")
+                PrintLog(f"MCTS", f"early stopping time {elapsed_time_ms} ms",1)
                 break
             self.iteration()
 
