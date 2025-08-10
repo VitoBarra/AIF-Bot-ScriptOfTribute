@@ -1,7 +1,6 @@
 import random
 import time
 from math import floor
-
 from scripts_of_tribute.base_ai import BaseAI
 from scripts_of_tribute.board import GameState, EndGameState
 from scripts_of_tribute.enums import MoveEnum, PlayerEnum
@@ -63,18 +62,24 @@ class AIFBotMCTS(BaseAI):
                      1)
             return best_choice
 
+        if len(possible_moves) > 1:
+            #Move Evaluation
+            start_time = time.perf_counter()
+            # monte_carlo_tree_search = MonteCarloTreeSearch(game_state, possible_moves, floor(remaining_time/len(possible_moves)), self.UtilityFunction, 500)
+            # best_move = monte_carlo_tree_search.MonteCarloSearch()
 
-        #Move Evaluation
-        start_time = time.perf_counter()
-        # monte_carlo_tree_search = MonteCarloTreeSearch(game_state, possible_moves, floor(remaining_time/len(possible_moves)), self.UtilityFunction, 500)
-        # best_move = monte_carlo_tree_search.MonteCarloSearch()
+            monte_carlo_tree_search = MCTS2(game_state, possible_moves, self.player_id, self.UtilityFunction)
+            best_move = monte_carlo_tree_search.move_choice(500, floor(remaining_time / len(possible_moves)))
 
-        monte_carlo_tree_search = MCTS2(game_state, possible_moves, remaining_time, self.player_id, self.UtilityFunction)
-        best_move = monte_carlo_tree_search.move_choice(500, 1000)
-
-        elapsed_time_ms = (time.perf_counter() - start_time) * 1000
-        PrintLog("MCTS",f"selected move {best_move.command} in {elapsed_time_ms:.2f} ms over the {remaining_time} ms remaining and over {len(possible_moves)} moves",1)
-        PrintLog("STATE",f"coin {game_state.current_player.coins}, prestige: {game_state.current_player.prestige}, power: {game_state.current_player.power}",1)
+            elapsed_time_ms = (time.perf_counter() - start_time) * 1000
+            PrintLog("MCTS",f"selected move {best_move.command} in {elapsed_time_ms:.2f} ms over the {remaining_time} ms remaining and over {len(possible_moves)} moves",1)
+            PrintLog("STATE",f"coin {game_state.current_player.coins}, prestige: {game_state.current_player.prestige}, power: {game_state.current_player.power}",1)
+        elif len(possible_moves) == 1:
+            best_move = possible_moves[0]
+            PrintLog ("MOVE",f"selected move {best_move.command}",1)
+        else:
+            best_move = None
+            PrintLog("NO MOVE","no valid moves found", 1)
 
         # End of Search
         if best_move is None:
