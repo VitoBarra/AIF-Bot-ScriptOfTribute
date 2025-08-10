@@ -3,7 +3,7 @@ from BotCommon.Heuristics import utilityFunction_PrestigeAndPower, utilityFuncti
 from ExampleBot.RandomBot import RandomBot
 from Helper.GameManager import RunGames
 from HeuristicLearning.EvolutionaryHeuristic import evolutionary_algorithm, Individual
-from Helper.LoggerFilesHelper import CleanUpLogs
+from Helper.LoggerFilesHelper import CleanUpLogs, results_from_log, PrintWinningReasonFromLog
 from bots.AIFBot_MCTS import AIFBotMCTS
 from bots.BoundedDS import BoundedDS
 
@@ -50,5 +50,6 @@ def MakeRun():
 if __name__ == "__main__":
     # results_from_log()
     CleanUpLogs()
-    # MakeRun()
-    Evolve()
+    MakeRun()
+    PrintWinningReasonFromLog()
+    # Evolve()
