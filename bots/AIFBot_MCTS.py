@@ -64,7 +64,7 @@ class AIFBotMCTS(BaseAI):
         # best_move = monte_carlo_tree_search.MonteCarloSearch()
 
         monte_carlo_tree_search = MCTS2(game_state, possible_moves, remaining_time, self.player_id, self.UtilityFunction)
-        best_move = monte_carlo_tree_search.move_choice(500)
+        best_move = monte_carlo_tree_search.move_choice(500, 1000)
 
         elapsed_time_ms = (time.perf_counter() - start_time) * 1000
         print(f"    [MCTS] -> selected move {best_move.command} in {elapsed_time_ms} ms")
