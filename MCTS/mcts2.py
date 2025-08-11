@@ -164,6 +164,9 @@ class MCTS2:
         best_move = random.choice(self.root.possible_moves)
         best_utility = float('-inf')
 
+        if len(self.root.children.values()) != len(self.root.possible_moves):
+            PrintLog(f"MCTS", f"didn't have time to check all the move, given time: {given_time}",1)
+
         nodes = self.root.children.values()
         for node in nodes:
             if node.total_utility > best_utility:
