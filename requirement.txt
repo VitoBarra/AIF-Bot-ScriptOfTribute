@@ -1,3 +1,4 @@
 scripts-of-tribute
 numpy
 tqdm
+matplotlib
