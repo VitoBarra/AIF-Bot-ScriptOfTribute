@@ -6,7 +6,7 @@ from HeuristicLearning.EvolutionaryHeuristic import evolutionary_algorithm, Indi
 from Helper.LoggerFilesHelper import CleanUpLogs, results_from_log, PrintWinningReasonFromLog
 from bots.AIFBot_MCTS import AIFBotMCTS
 from bots.BoundedDS import BoundedDS
-
+from HeuristicLearning.EvoPlot import plot_convergence_from_checkpoints, plotSingleWeight_from_checkpoints
 
 #=====Settings=====
 HIDE_PRINT = True
@@ -53,3 +53,5 @@ if __name__ == "__main__":
     MakeRun()
     PrintWinningReasonFromLog()
     # Evolve()
+    # plot_convergence_from_checkpoints(20,13)
+    # plotSingleWeight_from_checkpoints(20,13)
