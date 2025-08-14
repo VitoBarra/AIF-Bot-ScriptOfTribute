@@ -2,3 +2,5 @@ scripts-of-tribute
 numpy
 tqdm
 matplotlib
+notebook
+playwright
