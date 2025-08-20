@@ -122,6 +122,13 @@ class MCTS2:
             except Exception as e:
                 print(e)
                 raise ValueError ("problems with apply_move")
+            if len(possible_moves) == 1:
+                move = possible_moves[0]
+                continue
+            for possible_move in possible_moves:
+                if possible_move.command == MoveEnum.END_TURN:
+                    possible_moves.remove(possible_move)
+                    break
             move = random.choice(possible_moves)
         return game_state
 
