@@ -15,13 +15,14 @@ from MCTS.mcts2 import MCTS2
 class AIFBotMCTS(BaseAI):
 
     ## ========================SET UP========================
-    def __init__(self, bot_name, evaluation_function, max_iteration = 200, weights=None, functions=None):
+    def __init__(self, bot_name, evaluation_function, max_iteration = 200, weights=None, functions=None, seed=None):
         super().__init__(bot_name)
         self.evaluation_function = evaluation_function
         self.MaxIteration = max_iteration
         self.player_id: PlayerEnum = PlayerEnum.NO_PLAYER_SELECTED
         self.start_of_game: bool = True
         self.best_moves:list[BasicMove] = []
+        self.seed      = seed
         self.Weights   = weights
         self.Functions = functions
 
@@ -69,7 +70,7 @@ class AIFBotMCTS(BaseAI):
             # monte_carlo_tree_search = MonteCarloTreeSearch(game_state, possible_moves, floor(remaining_time/len(possible_moves)), self.UtilityFunction, 500)
             # best_move = monte_carlo_tree_search.MonteCarloSearch()
 
-            monte_carlo_tree_search = MCTS2(game_state, possible_moves, self.player_id, self.UtilityFunction)
+            monte_carlo_tree_search = MCTS2(game_state, possible_moves, self.player_id, self.UtilityFunction, self.seed)
             best_move = monte_carlo_tree_search.move_choice(self.MaxIteration, floor(remaining_time / len(possible_moves)))
 
             elapsed_time_ms = (time.perf_counter() - start_time) * 1000

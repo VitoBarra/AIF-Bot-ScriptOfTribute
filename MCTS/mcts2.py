@@ -74,6 +74,7 @@ class MCTS2:
         self.root = RootNode(game_state, possible_moves)
         self.player_id = player_id
         self.evaluation_function = evaluation_function
+        self.seed = seed
         random.seed(16)
 
     def evaluation(self, game_state: GameState) -> float:
@@ -106,7 +107,7 @@ class MCTS2:
                     break
 
                 try:
-                    actual_game_state, actual_possible_moves = actual_game_state.apply_move(actual_node.parent_move)
+                    actual_game_state, actual_possible_moves = actual_game_state.apply_move(actual_node.parent_move, self.seed)
                 except Exception as e:
                     print(e)
                     raise ValueError (f"problems with apply_move, Move: {actual_node.parent_move} ")
