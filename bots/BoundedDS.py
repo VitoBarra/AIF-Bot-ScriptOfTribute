@@ -16,7 +16,7 @@ from HeuristicLearning import RESULTS_PATH
 class BoundedDS(BaseAI):
 
     ## ========================SET UP========================
-    def __init__(self, bot_name: str, depth:int, evaluation_function:GameStateEvaluatorUtility, weights:np.ndarray=None, functions:list[str] = None, use_prior_move: bool = False):
+    def __init__(self, bot_name: str, depth:int, evaluation_function:GameStateEvaluatorUtility, weights:np.ndarray=None, functions:list[str] = None, use_prior_move: bool = False, seed=None):
         super().__init__(bot_name)
         self.player_id: PlayerEnum = PlayerEnum.NO_PLAYER_SELECTED
         self.start_of_game: bool = True
@@ -25,6 +25,7 @@ class BoundedDS(BaseAI):
         self.Weights = weights
         self.Functions = functions
         self.UsePriorMove = use_prior_move
+        self.seed = seed
 
     def select_patron(self, available_patrons):
         pick = random.choice(available_patrons)
@@ -55,7 +56,7 @@ class BoundedDS(BaseAI):
 
     def EvaluateMove(self,move, game_state, depth:int)->float:
         # Move Evaluation (Depth first approach)
-        local_game_state, new_moves = game_state.apply_move(move)
+        local_game_state, new_moves = game_state.apply_move(move,self.seed)
 
         if CheckForGoalState(local_game_state,self.player_id):
             return float('inf')
