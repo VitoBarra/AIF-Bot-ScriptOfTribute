@@ -65,19 +65,22 @@ class AIFBotMCTS(BaseAI):
             return best_choice
 
         if len(possible_moves) > 1:
-            #Move Evaluation
-            start_time = time.perf_counter()
+            if remaining_time < 1000:
+                best_move = random.choice([m for m in possible_moves if m.command != MoveEnum.END_TURN])
+            else:
+                #Move Evaluation
+                start_time = time.perf_counter()
 
-            time_to_give = give_time(game_state, possible_moves, remaining_time, self.player_id)
-            elapsed_time_ms = (time.perf_counter() - start_time) * 1000
-            time_to_give -= int(elapsed_time_ms)
+                time_to_give = give_time(game_state, possible_moves, int(remaining_time * (4/5)), self.player_id)
+                elapsed_time_ms = (time.perf_counter() - start_time) * 1000
+                time_to_give -= int(elapsed_time_ms)
 
-            monte_carlo_tree_search = MCTS2(game_state, possible_moves, self.player_id, self.UtilityFunction, self.seed)
-            best_move = monte_carlo_tree_search.move_choice(self.MaxIteration, time_to_give)
+                monte_carlo_tree_search = MCTS2(game_state, possible_moves, self.player_id, self.UtilityFunction, self.seed)
+                best_move = monte_carlo_tree_search.move_choice(self.MaxIteration, time_to_give)
 
-            elapsed_time_ms = (time.perf_counter() - start_time) * 1000
-            PrintLog("MCTS",f"selected move {best_move.command} in {elapsed_time_ms:.2f} ms over the {remaining_time} ms remaining and over {len(possible_moves)} moves",1)
-            PrintLog("STATE",f"coin {game_state.current_player.coins}, prestige: {game_state.current_player.prestige}, power: {game_state.current_player.power}",1)
+                elapsed_time_ms = (time.perf_counter() - start_time) * 1000
+                PrintLog("MCTS",f"selected move {best_move.command} in {elapsed_time_ms:.2f} ms over the {remaining_time} ms remaining and over {len(possible_moves)} moves",1)
+                PrintLog("STATE",f"coin {game_state.current_player.coins}, prestige: {game_state.current_player.prestige}, power: {game_state.current_player.power}",1)
         elif len(possible_moves) == 1:
             best_move = possible_moves[0]
             PrintLog ("MOVE",f"selected move {best_move.command}",1)
