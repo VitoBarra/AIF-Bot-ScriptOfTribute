@@ -1,6 +1,5 @@
 import random
 import time
-from math import floor
 from scripts_of_tribute.base_ai import BaseAI
 from scripts_of_tribute.board import GameState, EndGameState
 from scripts_of_tribute.enums import MoveEnum, PlayerEnum
@@ -11,6 +10,7 @@ from Helper.Logging import PrintLog
 from Helper.Logging import LogEndOfGame
 
 from MCTS.mcts2 import MCTS2
+from MCTS.Common import give_time
 
 class AIFBotMCTS(BaseAI):
 
@@ -67,11 +67,13 @@ class AIFBotMCTS(BaseAI):
         if len(possible_moves) > 1:
             #Move Evaluation
             start_time = time.perf_counter()
-            # monte_carlo_tree_search = MonteCarloTreeSearch(game_state, possible_moves, floor(remaining_time/len(possible_moves)), self.UtilityFunction, 500)
-            # best_move = monte_carlo_tree_search.MonteCarloSearch()
+
+            time_to_give = give_time(game_state, possible_moves, remaining_time, self.player_id)
+            elapsed_time_ms = (time.perf_counter() - start_time) * 1000
+            time_to_give -= int(elapsed_time_ms)
 
             monte_carlo_tree_search = MCTS2(game_state, possible_moves, self.player_id, self.UtilityFunction, self.seed)
-            best_move = monte_carlo_tree_search.move_choice(self.MaxIteration, floor(remaining_time / len(possible_moves)))
+            best_move = monte_carlo_tree_search.move_choice(self.MaxIteration, time_to_give)
 
             elapsed_time_ms = (time.perf_counter() - start_time) * 1000
             PrintLog("MCTS",f"selected move {best_move.command} in {elapsed_time_ms:.2f} ms over the {remaining_time} ms remaining and over {len(possible_moves)} moves",1)

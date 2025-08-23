@@ -6,9 +6,8 @@ from scripts_of_tribute.board import GameState
 from scripts_of_tribute.move import BasicMove
 from scripts_of_tribute.enums import MoveEnum
 from BotCommon.CommonCheck import obtain_move_semantic_id
-from BotCommon.CommonCheck import CheckForGoalState
 from Helper.Logging import PrintLog
-from MCTS.Common import calculate_ucb
+from MCTS.Common import calculate_ucb, playout
 import random
 
 
@@ -81,7 +80,7 @@ class MCTS2:
         return self.evaluation_function(game_state)
 
     def playout_and_back_prop(self, node, game_state):
-        terminal_game_state = MCTS.playout(node.parent_move, game_state, self.player_id)
+        terminal_game_state = playout(node.parent_move, game_state, self.player_id)
         utility = self.evaluation(terminal_game_state)
         node.back_propagation(utility)
 
@@ -116,24 +115,6 @@ class MCTS2:
                 self.playout_and_back_prop(new_child, actual_game_state)
 
     @staticmethod
-    def playout(move: BasicMove, game_state: GameState, player_id) -> GameState:
-        while not (CheckForGoalState(game_state, player_id) or move.command == MoveEnum.END_TURN):
-            try:
-                game_state, possible_moves = game_state.apply_move(move)
-            except Exception as e:
-                print(e)
-                raise ValueError ("problems with apply_move")
-            if len(possible_moves) == 1:
-                move = possible_moves[0]
-                continue
-            for possible_move in possible_moves:
-                if possible_move.command == MoveEnum.END_TURN:
-                    possible_moves.remove(possible_move)
-                    break
-            move = random.choice(possible_moves)
-        return game_state
-
-    @staticmethod
     def selection (nodes: dict[tuple, NotRootNode], possible_moves: list[BasicMove]) -> NotRootNode:
         actual_children: list[NotRootNode] = []
         for possible_move in possible_moves:
@@ -164,8 +145,10 @@ class MCTS2:
         start_time = time.perf_counter()
         for i in range(max_iterations):
             elapsed_time_ms = (time.perf_counter() - start_time) * 1000
-            if elapsed_time_ms - given_time> 150:
-                PrintLog(f"MCTS", f"early stopping time {elapsed_time_ms} ms",1)
+            if given_time - elapsed_time_ms < 50:
+                PrintLog("MCTS",
+                         f"Early stopping at iteration {i + 1}/{max_iterations}, elapsed time: {int(elapsed_time_ms)}/{given_time} ms",
+                         2)
                 break
             self.iteration()
 
