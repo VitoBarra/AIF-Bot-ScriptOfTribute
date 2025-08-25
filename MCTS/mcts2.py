@@ -140,7 +140,7 @@ class MCTS2:
 
         return best_node
 
-    def move_choice(self, max_iterations:int, given_time:int) -> BasicMove:
+    def MonteCarloSearch(self, max_iterations:int, given_time:int) -> BasicMove:
         PrintLog(f"MCTS", f"start move choice with {len(self.root.possible_moves)} possible moves and {max_iterations} iterations with {given_time} ms time limit",1)
         start_time = time.perf_counter()
         for i in range(max_iterations):

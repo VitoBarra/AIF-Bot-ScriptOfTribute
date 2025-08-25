@@ -8,14 +8,30 @@ from scripts_of_tribute.move import BasicMove
 from BotCommon.CommonCheck import IsPriorMoves, MakePriorChoice
 from Helper.Logging import PrintLog
 from Helper.Logging import LogEndOfGame
+from MCTS.DMultyTMCTS import DMultyTCTS
+from MCTS.DSingleTMCTS import DSingleTMCTS
+from MCTS.FlatMCTS import FlatMCTS
+from MCTS.ClassicMCTS import MCTS
+from MCTS.ProgressiveMCTS import ProgressiveMCTS
 
 from MCTS.mcts2 import MCTS2
 from MCTS.Common import give_time
 
+from enum import Enum
+
+class MCTSenum(Enum):
+    MCTS2               = 1
+    FlatMCTS            = 2
+    MCTS                = 3
+    ProgressiveMCTS     = 4
+    DMultyTMCTS             = 5
+    DSingleTMCTS             = 6
+
+
 class AIFBotMCTS(BaseAI):
 
     ## ========================SET UP========================
-    def __init__(self, bot_name, evaluation_function, max_iteration = 200, weights=None, functions=None, seed=None):
+    def __init__(self, bot_name, evaluation_function, max_iteration = 200, weights=None, functions=None, seed=None, MCTSversion: MCTSenum = MCTSenum.MCTS2 ):
         super().__init__(bot_name)
         self.evaluation_function = evaluation_function
         self.MaxIteration = max_iteration
@@ -25,6 +41,7 @@ class AIFBotMCTS(BaseAI):
         self.seed      = seed
         self.Weights   = weights
         self.Functions = functions
+        self.MCTSversion = MCTSversion
 
     def select_patron(self, available_patrons):
         pick = random.choice(available_patrons)
@@ -75,8 +92,24 @@ class AIFBotMCTS(BaseAI):
                 elapsed_time_ms = (time.perf_counter() - start_time) * 1000
                 time_to_give -= int(elapsed_time_ms)
 
-                monte_carlo_tree_search = MCTS2(game_state, possible_moves, self.player_id, self.UtilityFunction, self.seed)
-                best_move = monte_carlo_tree_search.move_choice(self.MaxIteration, time_to_give)
+                monte_carlo_tree_search = None
+                match self.MCTSversion:
+                    case MCTSenum.MCTS2:
+                        monte_carlo_tree_search = MCTS2(game_state, possible_moves, self.player_id,self.UtilityFunction, self.seed)
+                    case MCTSenum.FlatMCTS:
+                        monte_carlo_tree_search = FlatMCTS(game_state, possible_moves, self.UtilityFunction)
+                    case MCTSenum.MCTS:
+                        monte_carlo_tree_search = MCTS(game_state, possible_moves, self.UtilityFunction)
+                    case MCTSenum.ProgressiveMCTS:
+                        monte_carlo_tree_search = ProgressiveMCTS(game_state, possible_moves, self.UtilityFunction)
+                    case MCTSenum.DMultyTMCTS:
+                        monte_carlo_tree_search = DMultyTCTS(game_state, possible_moves, self.UtilityFunction)
+                    case MCTSenum.DSingleTMCTS:
+                        monte_carlo_tree_search = DSingleTMCTS(game_state, possible_moves, self.UtilityFunction)
+                    case _:
+                        raise ValueError("Unknown MCTS version")
+
+                best_move = monte_carlo_tree_search.MonteCarloSearch(self.MaxIteration, time_to_give)
 
                 elapsed_time_ms = (time.perf_counter() - start_time) * 1000
                 PrintLog("MCTS",f"selected move {best_move.command} in {elapsed_time_ms:.2f} ms over the {remaining_time} ms remaining and over {len(possible_moves)} moves",1)

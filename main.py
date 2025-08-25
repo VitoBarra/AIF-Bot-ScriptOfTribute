@@ -4,7 +4,7 @@ from ExampleBot.RandomBot import RandomBot
 from Helper.GameManager import TryAsFirstAndSecondPlayer_PrintReasonFromLog
 from HeuristicLearning.EvolutionaryHeuristic import evolutionary_algorithm, Individual
 from Helper.LoggerFilesHelper import CleanUpLogs, results_from_log, PrintWinningReasonFromLog
-from bots.AIFBot_MCTS import AIFBotMCTS
+from bots.AIFBot_MCTS import AIFBotMCTS, MCTSenum
 from bots.BoundedDS import BoundedDS
 from HeuristicLearning.EvoPlot import plot_convergence_from_checkpoints, plotSingleWeight_from_checkpoints
 
@@ -21,29 +21,30 @@ def Evolve():
 
 
 def MakeRun():
-    depth = 2
-
-    BoundedDS_WMMHVR_name       = f"BoundedDS_WMMHVR_{depth}_Moves"
-    aif_MMHVR_name             = f"AIFBOT_MMHVR_{depth}_Moves"
-    aif_MCTS_WMMHVR_name       = f"AIFBOT_MCTS_WMMHVR"
-    aif_MCTS_maxPrestige_name  = f"AIFBOT_MCTS_MAXPRESTIGE"
-    aif_MCTS_WMMHVR_evolved_name = f"AIFBOT_MCTS_WMMHVR_evolved"
-    random_name                = f"RandomBot"
-
-    bot_BoundedDS_WMMHVR       = BoundedDS                    (bot_name=BoundedDS_WMMHVR_name, depth=depth,
-                                                               evaluation_function= utilityFunction_MMHVR)
-    bot_aif_MCTS_WMMHVR        = AIFBotMCTS                   (bot_name=aif_MCTS_WMMHVR_name,
-                                                               evaluation_function= utilityFunction_MMHVR)
-    bot_aif_MCTS_Max_Prestige  = AIFBotMCTS                   (bot_name=aif_MCTS_maxPrestige_name,
-                                                               evaluation_function= utilityFunction_PrestigeAndPower)
-    bot_random                 = RandomBot                    (bot_name=random_name)
+    bot_BoundedDS_WMMHVR   = BoundedDS                    (bot_name="BoundedDS_WMMHVR_2_Moves", depth=2, use_prior_move= False,
+                                                           evaluation_function= utilityFunction_MMHVR)
+    bot_MCTS2_WMMHVR       = AIFBotMCTS                   (bot_name="MCTS2_WMMHVR",       MCTSversion= MCTSenum.MCTS2,
+                                                           evaluation_function= utilityFunction_MMHVR)
+    bot_FlatMCTS_WMMHVR    = AIFBotMCTS                   (bot_name="flatMCTS_WMMHVR",    MCTSversion= MCTSenum.FlatMCTS,
+                                                           evaluation_function= utilityFunction_MMHVR)
+    bot_MCTS_WMMHVR        = AIFBotMCTS                   (bot_name="MCTS_WMMHVR",        MCTSversion= MCTSenum.MCTS,
+                                                           evaluation_function= utilityFunction_MMHVR)
+    bot_ProgMCTS_WMMHVR    = AIFBotMCTS                   (bot_name="ProgMCTS_WMMHVR",    MCTSversion= MCTSenum.ProgressiveMCTS,
+                                                           evaluation_function= utilityFunction_MMHVR)
+    bot_DMultyTMCTS_WMMHVR = AIFBotMCTS                   (bot_name="DMultyMCTS_WMMHVR",  MCTSversion= MCTSenum.DMultyTMCTS,
+                                                           evaluation_function= utilityFunction_MMHVR)
+    bot_DSingleTMCTS_WMMHVR= AIFBotMCTS                   (bot_name="DSingleMCTS_WMMHVR", MCTSversion= MCTSenum.DSingleTMCTS,
+                                                           evaluation_function=utilityFunction_MMHVR)
+    bot_MCTS2_Max_Prestige = AIFBotMCTS                   (bot_name="MCTS2_MAX_prestige", MCTSversion= MCTSenum.MCTS2,
+                                                           evaluation_function= utilityFunction_PrestigeAndPower)
+    bot_random             = RandomBot                    (bot_name="RandomBot")
 
     ind = Individual.LoadLatest("gen")
-    bot_aif_MCTS_WMMHVR_evolved = AIFBotMCTS                  (bot_name=aif_MCTS_WMMHVR_evolved_name,
-                                                                evaluation_function=WeightedUtilityFunction_MMHVR_plain,
-                                                               weights= ind.weights, functions=ind.activations)
+    bot_MCTS_WMMHVR_evolved = AIFBotMCTS                  (bot_name="MCTS2_WMMHVR_evolved", MCTSversion= MCTSenum.MCTS2,
+                                                           evaluation_function=WeightedUtilityFunction_MMHVR_plain,
+                                                           weights=ind.weights, functions=ind.activations)
 
-    TryAsFirstAndSecondPlayer_PrintReasonFromLog(bot_aif_MCTS_WMMHVR, bot_BoundedDS_WMMHVR, runs=RUN_NUM, threads=THREAD_NUM, hide_print=HIDE_PRINT)
+    TryAsFirstAndSecondPlayer_PrintReasonFromLog(bot_DMultyTMCTS_WMMHVR, bot_BoundedDS_WMMHVR, runs=RUN_NUM, threads=THREAD_NUM, hide_print=HIDE_PRINT)
 
 if __name__ == "__main__":
     # results_from_log()
