@@ -8,6 +8,7 @@ from scripts_of_tribute.move import BasicMove
 from BotCommon.CommonCheck import IsPriorMoves, MakePriorChoice
 from Helper.Logging import PrintLog
 from Helper.Logging import LogEndOfGame
+from MCTS.FlatMCTS import FlatMCTS
 
 from MCTS.mcts2 import MCTS
 from MCTS.Common import give_time
@@ -18,7 +19,7 @@ class AIFBotMCTS(BaseAI):
     def __init__(self, bot_name, evaluation_function, max_playout = 200, weights=None, functions=None, seed=None):
         super().__init__(bot_name)
         self.evaluation_function = evaluation_function
-        self.max_playout = max_playout
+        self.MaxIteration = max_playout
         self.player_id: PlayerEnum = PlayerEnum.NO_PLAYER_SELECTED
         self.start_of_game: bool = True
         self.best_moves:list[BasicMove] = []
@@ -70,7 +71,9 @@ class AIFBotMCTS(BaseAI):
                 time_to_give -= int(elapsed_time_ms)
 
                 monte_carlo_tree_search = MCTS(game_state, possible_moves, self.player_id, self.UtilityFunction, self.seed)
-                best_move = monte_carlo_tree_search.move_choice(self.max_playout, time_to_give)
+                best_move = monte_carlo_tree_search.move_choice(self.MaxIteration, time_to_give)
+                # monte_carlo_tree_search = FlatMCTS(game_state, possible_moves, self.UtilityFunction)
+                # best_move = monte_carlo_tree_search.MonteCarloSearch(self.MaxIteration, time_to_give)
 
                 elapsed_time_ms = (time.perf_counter() - start_time) * 1000
                 PrintLog("MCTS",f"selected move {best_move.command} in {elapsed_time_ms:.2f} ms over the {remaining_time} ms remaining",1)
