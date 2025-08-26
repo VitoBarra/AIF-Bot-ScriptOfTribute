@@ -14,6 +14,7 @@ class MCTSNode:
         self.ParentNode: MCTSNode | None = parent
         self.Move: BasicMove | None = move
         self.Children: list[MCTSNode] = []
+        self.UnexpandedPossibleMoves: list[BasicMove] = []
 
         self.NumberOfVisits = 0
         self.MaxUtility     = 0
@@ -63,8 +64,17 @@ class MCTSNode:
             node_generated.append(node)
         return node_generated
 
+    def ProgressiveExpand(self, seed: int | None = None) -> 'MCTSNode':
+        if self.GameState is not None:
+            self.GameState, self.UnexpandedPossibleMoves = self.GenerateNextState(seed)
+        if len(self.UnexpandedPossibleMoves) == 0:
+            return None
+        move = random.choice(self.UnexpandedPossibleMoves)
+        self.UnexpandedPossibleMoves.remove(move)
+        return self.AddChildMove(move)
+
     def IsExpanded(self) -> bool:
-        return len(self.Children) > 0
+        return self.GameState is not None and len(self.UnexpandedPossibleMoves) == 0
 
     def IsComplete(self):
         if not self.IsComplete_value:
