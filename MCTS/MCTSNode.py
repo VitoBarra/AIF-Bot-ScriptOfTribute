@@ -53,10 +53,15 @@ class MCTSNode:
         for move in possible_moves:
             _ = self.AddChildMove(move)
 
-    def Expand(self, seed: int | None = None) -> None:
+    def Expand(self, seed: int | None = None) -> list['MCTSNode']:
+        if self.GameState is not None:
+            raise ValueError("already fully expanded node cannot be expanded again")
+        node_generated = []
         self.GameState, possible_moves = self.GenerateNextState(seed)
         for move in possible_moves:
-            _ = self.AddChildMove(move)
+            node = self.AddChildMove(move)
+            node_generated.append(node)
+        return node_generated
 
     def IsExpanded(self) -> bool:
         return len(self.Children) > 0
