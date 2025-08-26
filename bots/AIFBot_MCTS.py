@@ -83,7 +83,17 @@ class AIFBotMCTS(BaseAI):
 
         if len(possible_moves) > 1:
             if remaining_time < 1000:
-                best_move = random.choice([m for m in possible_moves if m.command != MoveEnum.END_TURN])
+                if self.MaxIteration > 30:
+                    self.MaxIteration -= 5
+                best_move = None
+                best_utility = float('-inf')
+                for move in possible_moves:
+                    new_game_state,_ = game_state.apply_move(move)
+                    move_utility = self.UtilityFunction(new_game_state)
+                    if move_utility > best_utility:
+                        best_utility = move_utility
+                        best_move = move
+                return best_move
             else:
                 #Move Evaluation
                 start_time = time.perf_counter()
