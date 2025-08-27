@@ -5,14 +5,17 @@ from scripts_of_tribute.board import GameState
 from scripts_of_tribute.enums import MoveEnum
 from scripts_of_tribute.move import BasicMove
 
+from BotCommon.CommonCheck import obtain_move_semantic_id
 from MCTS.Common import calculate_ucb
 
 
 class MCTSNode:
-    def __init__(self, parent: 'MCTSNode', move:BasicMove):
-        self.GameState: GameState = None
+    def __init__(self, parent: 'MCTSNode', move:BasicMove, moveSeed: int | None = None):
+        self.GameStates: dict[int | None, GameState] = {}
         self.ParentNode: MCTSNode | None = parent
         self.Move: BasicMove | None = move
+        self.MoveSemanticId: tuple | None = obtain_move_semantic_id(self.Move)
+        self.MoveSeed: int | None     = moveSeed
         self.Children: list[MCTSNode] = []
         self.UnexpandedPossibleMoves: list[BasicMove] = []
 
@@ -31,9 +34,11 @@ class MCTSNode:
         return self.Move.command == MoveEnum.END_TURN
 
     ##===============================================================
-    def GenerateNextState(self, seed: int | None = None) -> tuple[GameState, list[BasicMove]]:
-        game_state, possible_moves = self.ParentNode.GameState.apply_move(self.Move, seed)  # Apply the move to the game state
-        return game_state, possible_moves
+    def GenerateNextState(self, seed: int|None = None) -> tuple[GameState, list[BasicMove]]:
+        parent_state = self.ParentNode.GameStates.get(self.MoveSeed)
+        if parent_state is None:
+            raise ValueError(f"No GameState available for seed {seed}")
+        return parent_state.apply_move(self.Move, seed)
 
     def Ucb1Value(self) -> float:
         if self.ParentNode is None:
@@ -44,48 +49,54 @@ class MCTSNode:
     def AddChild(self, child_node: 'MCTSNode') -> None:
         self.Children.append(child_node)
 
-    def AddChildMove(self, move: BasicMove) -> 'MCTSNode':
-        child_node = MCTSNode(parent=self, move=move)
+    def AddChildMove(self, move: BasicMove, seed:int|None = None) -> 'MCTSNode':
+        child_node = MCTSNode(parent=self, move=move, moveSeed=seed)
         self.Children.append(child_node)
         return child_node
 
     def ExpandRoot(self, game_state: GameState, possible_moves: list[BasicMove]) -> None:
-        self.GameState = game_state
+        self.GameStates[None] = game_state
         for move in possible_moves:
-            _ = self.AddChildMove(move)
+            _ = self.AddChildMove(move, None)
 
     def Expand(self, seed: int | None = None) -> list['MCTSNode']:
-        if self.GameState is not None:
-            raise ValueError("already fully expanded node cannot be expanded again")
+        if seed in self.GameStates:
+            raise ValueError("seed already preset cannot expand again")
         node_generated = []
-        self.GameState, possible_moves = self.GenerateNextState(seed)
-        for move in possible_moves:
-            node = self.AddChildMove(move)
+        self.GameStates[seed], possible_moves = self.GenerateNextState(seed)
+        for move in self.GetChildrenNotAlreadyConsidered(possible_moves):
+            node = self.AddChildMove(move, seed)
             node_generated.append(node)
         return node_generated
 
     def ProgressiveExpand(self, seed: int | None = None) -> 'MCTSNode':
-        if self.GameState is not None:
-            self.GameState, self.UnexpandedPossibleMoves = self.GenerateNextState(seed)
+        if seed not in self.GameStates:
+            self.GameStates[seed], newUnexpandedPossibleMoves = self.GenerateNextState(seed)
+            self.UnexpandedPossibleMoves += self.GetChildrenNotAlreadyConsidered(newUnexpandedPossibleMoves)
         if len(self.UnexpandedPossibleMoves) == 0:
             return None
         move = random.choice(self.UnexpandedPossibleMoves)
         self.UnexpandedPossibleMoves.remove(move)
-        return self.AddChildMove(move)
+        return self.AddChildMove(move,seed)
 
-    def IsExpanded(self) -> bool:
-        return self.GameState is not None and len(self.UnexpandedPossibleMoves) == 0
+    def IsExpanded(self, times:int=1) -> bool:
+        return  len(self.GameStates.keys()) >= times and len(self.UnexpandedPossibleMoves) == 0
 
-    def IsComplete(self):
+    def IsComplete(self, max_expansion: int = 1) -> bool:
         if not self.IsComplete_value:
             self.IsComplete_value = (
                     self.IsTerminal() or
-                    (self.IsExpanded()
-                    and all(child.IsTerminal() or child.IsComplete() for child in self.Children)))
+                    ( self.IsExpanded(max_expansion))
+                    and all(child.IsTerminal() or child.IsComplete(max_expansion) for child in self.Children))
         return self.IsComplete_value
 
-    def GenIncompleteChildren(self) -> list['MCTSNode']:
-        return [c for c in self.Children if not c.IsComplete()]
+    def GenIncompleteChildren(self,max_expansion:int = 1 ) -> list['MCTSNode']:
+        return [c for c in self.Children if not c.IsComplete(max_expansion)]
+
+    def GetChildrenNotAlreadyConsidered(self, possible_move: list[BasicMove]) -> list[BasicMove]:
+        considered_semantic_ids = [child.MoveSemanticId for child in self.Children]
+        considered_semantic_ids += [obtain_move_semantic_id(m) for m in self.UnexpandedPossibleMoves]
+        return [m for m in possible_move if obtain_move_semantic_id(m) not in considered_semantic_ids]
 
 
 #=========================Selection========================
