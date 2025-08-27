@@ -1,7 +1,7 @@
 from BotCommon.Heuristics import utilityFunction_PrestigeAndPower, utilityFunction_MMHVR, \
     WeightedUtilityFunction_MMHVR_plain
 from ExampleBot.RandomBot import RandomBot
-from Helper.GameManager import RunGames
+from Helper.GameManager import TryAsFirstAndSecondPlayer_PrintReasonFromLog
 from HeuristicLearning.EvolutionaryHeuristic import evolutionary_algorithm, Individual
 from Helper.LoggerFilesHelper import CleanUpLogs, results_from_log, PrintWinningReasonFromLog
 from bots.AIFBot_MCTS import AIFBotMCTS
@@ -43,15 +43,11 @@ def MakeRun():
                                                                 evaluation_function=WeightedUtilityFunction_MMHVR_plain,
                                                                weights= ind.weights, functions=ind.activations)
 
-
-    RunGames(bot_aif_MCTS_WMMHVR, bot_aif_MCTS_WMMHVR_evolved, runs=RUN_NUM, threads=THREAD_NUM, hide_print=HIDE_PRINT)
-
+    TryAsFirstAndSecondPlayer_PrintReasonFromLog(bot_aif_MCTS_WMMHVR, bot_BoundedDS_WMMHVR, runs=RUN_NUM, threads=THREAD_NUM, hide_print=HIDE_PRINT)
 
 if __name__ == "__main__":
     # results_from_log()
-    CleanUpLogs()
     MakeRun()
-    PrintWinningReasonFromLog()
     # Evolve()
     # plot_convergence_from_checkpoints(20,13)
     # plotSingleWeight_from_checkpoints(20,13)
