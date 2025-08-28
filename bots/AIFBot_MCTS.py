@@ -99,8 +99,6 @@ class AIFBotMCTS(BaseAI):
                 start_time = time.perf_counter()
 
                 time_to_give = give_time(game_state, possible_moves, int(remaining_time * (4/5)), self.player_id)
-                elapsed_time_ms = (time.perf_counter() - start_time) * 1000
-                time_to_give -= int(elapsed_time_ms)
 
                 monte_carlo_tree_search = None
                 match self.MCTSversion:

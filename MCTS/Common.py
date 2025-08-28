@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 import random
 from scripts_of_tribute.board import GameState
@@ -62,19 +64,21 @@ def calculate_time_to_give(b: list[int], remaining_time: int) -> int:
     return int(remaining_time / total_factor)
 
 def give_time(game_state: GameState, possible_moves:list[BasicMove], remaining_time: int, player_id) -> int:
+    start = time.perf_counter()
     if len(possible_moves) <= 1:
         raise ValueError("b must have at least two elements in give_time")
 
-    time_to_give = float('inf')
+    time_to_give = []
     for move in possible_moves:
         if move.command == MoveEnum.END_TURN:
             continue
         b: list[int] = [len(possible_moves)-1] # minus 1 for the end-of-turn move
         playout(move, game_state, player_id, b)
+        t_0 = calculate_time_to_give(b, remaining_time)
+        time_to_give.append(t_0)
 
-        time_to_give = min (calculate_time_to_give(b, remaining_time), time_to_give)
+    execution_time_ms = (time.perf_counter() - start) * 1000
+    if len(time_to_give) == 0:
+        raise ValueError("No valid moves found to allocate time to.")
 
-    if time_to_give == float('inf'):
-        raise ValueError("no time has been calculated")
-
-    return time_to_give
+    return min(time_to_give) - int(execution_time_ms)
